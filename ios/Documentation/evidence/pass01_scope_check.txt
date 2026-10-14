@@ -1,0 +1,78 @@
+== iOS stabilization pass 01 — scope check ==
+-- Fase 04 (must be empty):
+-- interface/app layer RuntimePoC/ (pass 02: only the S-009 save destination;
+   the visible surface is frozen by tools/ui_surface.snapshot.txt):
+    ios/RuntimePoC/Phase02Bridge.m |  6 ++++++
+    ios/RuntimePoC/main.c          | 22 +++++++++++++++++++++-
+    2 files changed, 27 insertions(+), 1 deletion(-)
+-- physical baseline IPHONE13_PHYSICAL_RUN_01.md (must be empty: immutable):
+-- files changed by this pass:
+   ios/CMakeLists.txt
+   ios/Diagnostics/include/phase02_capability_graph.h
+   ios/Diagnostics/include/phase02_execution_policy.h
+   ios/Diagnostics/src/phase02_capability_graph.c
+   ios/Diagnostics/src/phase02_execution_policy.c
+   ios/Diagnostics/src/phase02_harness.c
+   ios/Documentation/PHASE02_IOS_ERROR_LEDGER.md
+   ios/Documentation/PHASE02_SHM_CONSUMER_INVENTORY.md
+   ios/Documentation/evidence/ADDRESS_run.log
+   ios/Documentation/evidence/UNDEFINED_run.log
+   ios/Documentation/evidence/aarch64_binary_arch.txt
+   ios/Documentation/evidence/aarch64_build.log
+   ios/Documentation/evidence/aarch64_cmake_configure.log
+   ios/Documentation/evidence/aarch64_exec_memory_tests.log
+   ios/Documentation/evidence/aarch64_phase02_report.txt
+   ios/Documentation/evidence/aarch64_run_selected_tests.log
+   ios/Documentation/evidence/aarch64_suite_stdout.log
+   ios/Documentation/evidence/apple_api_audit.txt
+   ios/Documentation/evidence/apple_include_audit.txt
+   ios/Documentation/evidence/host_build.log
+   ios/Documentation/evidence/host_cmake_configure.log
+   ios/Documentation/evidence/host_ctest.log
+   ios/Documentation/evidence/host_phase02_report.txt
+   ios/Documentation/evidence/host_suite_stdout.log
+   ios/Documentation/evidence/interface_audit.txt
+   ios/Documentation/evidence/inventory_sha256.txt
+   ios/Documentation/evidence/link_symbol_audit.txt
+   ios/Documentation/evidence/pass01_scope_check.txt
+   ios/Documentation/evidence/pass05_audit_apple_apis.txt
+   ios/Documentation/evidence/pass05_audit_apple_includes.txt
+   ios/Documentation/evidence/pass05_audit_capability_graph.txt
+   ios/Documentation/evidence/pass05_audit_entitlement_config.txt
+   ios/Documentation/evidence/pass05_audit_fix06_contracts.txt
+   ios/Documentation/evidence/pass05_audit_interfaces.txt
+   ios/Documentation/evidence/pass05_audit_ios_stabilization.txt
+   ios/Documentation/evidence/pass05_audit_jit_causal_graph.txt
+   ios/Documentation/evidence/pass05_audit_platform_composition.txt
+   ios/Documentation/evidence/pass05_audit_shm_backend.txt
+   ios/Documentation/evidence/pass05_audit_shm_requirements.txt
+   ios/Documentation/evidence/pass05_fix06_negative_controls.txt
+   ios/Documentation/evidence/pass05_host_report_all.txt
+   ios/Documentation/evidence/pass05_pass03_controls.txt
+   ios/Documentation/evidence/pass05_pass04_controls.txt
+   ios/Documentation/evidence/pass05_pass05_controls.txt
+   ios/Documentation/evidence/pass05_platform_composition_negative_control.txt
+   ios/Documentation/evidence/pass05_stabilization_negative_controls.txt
+   ios/Documentation/evidence/pass05_xcodeproj_validation.txt
+   ios/Documentation/evidence/platform_composition_audit.txt
+   ios/Documentation/evidence/platform_composition_negative_control.txt
+   ios/RuntimeCore/include/runtime_exec_memory.h
+   ios/RuntimeCore/include/runtime_memory.h
+   ios/RuntimeCore/src/runtime_dual_mapping.c
+   ios/RuntimeCore/src/runtime_exec_memory.c
+   ios/RuntimeCore/src/runtime_jit.c
+   ios/RuntimeCore/src/runtime_loader.c
+   ios/RuntimeCore/src/runtime_memory.c
+   ios/RuntimePoC/Phase02Bridge.m
+   ios/RuntimePoC/main.c
+   ios/Tests/test_exec_memory.c
+   ios/Tests/test_run_selected.c
+   ios/WinlatorPhase02.xcodeproj/project.pbxproj
+   ios/tools/audit_capability_graph.py
+   ios/tools/audit_entitlement_config.py
+   ios/tools/audit_jit_causal_graph.py
+   ios/tools/audit_shm_backend.py
+   ios/tools/audit_shm_requirements.py
+   ios/tools/build_aarch64_cross.sh
+   ios/tools/pass03_negative_controls.py
+   ios/tools/pass05_negative_controls.py

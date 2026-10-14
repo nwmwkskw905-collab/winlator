@@ -1,0 +1,21 @@
+EVIDENCE_CLASS=HOST_LINUX_X86_64
+RUN_DATE_UTC=2026-10-14
+COMMAND=PATH=/tmp/winlator-tools/cmake/data/bin:/tmp/winlator-tools/bin:$PATH sh ios/tools/build_host_harness.sh
+
+HOST
+  Linux e2b.local 6.1.158+ #1 SMP PREEMPT_DYNAMIC Mon May 11 18:48:24 UTC 2026 x86_64 GNU/Linux
+  gcc (Debian 12.2.0-14+deb12u1) 12.2.0
+  cmake version 4.4.4
+
+OBSERVED OUTPUT
+  [host] warnings: 0 errors: 0
+  CTest: 100% tests passed out of 4
+  Unit tests: == 298 checks, 0 failures ==
+  Full diagnostic suite report: Documentation/evidence/host_phase02_report.txt
+  Suite summary: # records=62 assertions=0 pass=58 fail=0 blocked=0 unsupported=2 untested=0 not_applicable=2 summary=PASS
+
+SCOPE LIMIT
+  This is a Linux x86_64 host result only. It does not validate Darwin, iOS, `iphoneos`, an IPA,
+  a physical iPhone, PE32/PE32+, Wine, Box64 translation, Windows APIs, Windows graphics, audio,
+  input, or application compatibility. The loader exercised by the suite is the custom RTM1
+  diagnostic format, not PE.

@@ -1,0 +1,60 @@
+== pass 02 scope ==
+changed files (behaviour): 28
+FAIL CMakeLists.txt  +8/-0 is OUT OF SCOPE: no defect required it
+FAIL Diagnostics/include/phase02_capability_graph.h  +84/-0 is OUT OF SCOPE: no defect required it
+FAIL Diagnostics/include/phase02_execution_policy.h  +36/-1 is OUT OF SCOPE: no defect required it
+FAIL Diagnostics/src/phase02_capability_graph.c  +160/-0 is OUT OF SCOPE: no defect required it
+FAIL Diagnostics/src/phase02_execution_policy.c  +56/-20 is OUT OF SCOPE: no defect required it
+FAIL Diagnostics/src/phase02_harness.c  +227/-31 is OUT OF SCOPE: no defect required it
+ok   Documentation/PHASE02_IOS_ERROR_LEDGER.md  [pass 02 delivery]  +69/-0
+       concept: S-009 closed, S-010..S-017 registered, counts updated
+       why    : the ledger is the round's inventory.
+FAIL Documentation/PHASE02_SHM_CONSUMER_INVENTORY.md  +51/-0 is OUT OF SCOPE: no defect required it
+FAIL RuntimeCore/include/runtime_exec_memory.h  +148/-0 is OUT OF SCOPE: no defect required it
+FAIL RuntimeCore/include/runtime_memory.h  +42/-0 is OUT OF SCOPE: no defect required it
+FAIL RuntimeCore/src/runtime_dual_mapping.c  +26/-4 is OUT OF SCOPE: no defect required it
+FAIL RuntimeCore/src/runtime_exec_memory.c  +401/-0 is OUT OF SCOPE: no defect required it
+FAIL RuntimeCore/src/runtime_jit.c  +27/-47 is OUT OF SCOPE: no defect required it
+FAIL RuntimeCore/src/runtime_loader.c  +29/-35 is OUT OF SCOPE: no defect required it
+ok   RuntimeCore/src/runtime_memory.c  [S-017]  +170/-0
+       concept: rt_mem_protect(): the len > SIZE_MAX - page guard
+       why    : the same guard rt_mem_reserve already had: without it the rounding wraps, the call protects a sliver and reports success.
+FAIL RuntimePoC/Phase02Bridge.m  +6/-0 is OUT OF SCOPE: no defect required it
+FAIL RuntimePoC/main.c  +21/-1 is OUT OF SCOPE: no defect required it
+FAIL Tests/test_exec_memory.c  +489/-0 is OUT OF SCOPE: no defect required it
+FAIL Tests/test_run_selected.c  +278/-0 is OUT OF SCOPE: no defect required it
+FAIL WinlatorPhase02.xcodeproj/project.pbxproj  +12/-0 is OUT OF SCOPE: no defect required it
+FAIL tools/audit_capability_graph.py  +258/-0 is OUT OF SCOPE: no defect required it
+FAIL tools/audit_entitlement_config.py  +6/-1 is OUT OF SCOPE: no defect required it
+FAIL tools/audit_jit_causal_graph.py  +59/-27 is OUT OF SCOPE: no defect required it
+FAIL tools/audit_shm_backend.py  +51/-9 is OUT OF SCOPE: no defect required it
+FAIL tools/audit_shm_requirements.py  +223/-0 is OUT OF SCOPE: no defect required it
+FAIL tools/build_aarch64_cross.sh  +4/-0 is OUT OF SCOPE: no defect required it
+FAIL tools/pass03_negative_controls.py  +17/-8 is OUT OF SCOPE: no defect required it
+FAIL tools/pass05_negative_controls.py  +297/-0 is OUT OF SCOPE: no defect required it
+FAIL RuntimePoC/ContentView.swift  [S-009] is listed as changed but is unchanged: the round's contract is stale
+FAIL RuntimeCore/src/runtime_filesystem.c  [S-010, S-011, S-012] is listed as changed but is unchanged: the round's contract is stale
+FAIL RuntimeCore/src/runtime_ipc.c  [S-013] is listed as changed but is unchanged: the round's contract is stale
+FAIL RuntimeCore/src/runtime_signals.c  [S-015] is listed as changed but is unchanged: the round's contract is stale
+FAIL RuntimeCore/src/runtime_threads.c  [S-016] is listed as changed but is unchanged: the round's contract is stale
+FAIL RuntimeCore/src/runtime_cpu_abi.c  [S-014] is listed as changed but is unchanged: the round's contract is stale
+FAIL RuntimeCore/src/runtime_context.c  [S-014] is listed as changed but is unchanged: the round's contract is stale
+FAIL Diagnostics/src/phase02_log.c  [S-014] is listed as changed but is unchanged: the round's contract is stale
+FAIL Tests/test_runtime_core.c  [S-010, S-011, S-012, S-014, S-015, S-016, S-017] is listed as changed but is unchanged: the round's contract is stale
+FAIL tools/audit_ios_stabilization.py  [S-010, S-011, S-012, S-013, S-014, S-015, S-016, S-017] is listed as changed but is unchanged: the round's contract is stale
+FAIL tools/stabilization_negative_controls.py  [S-010, S-011, S-012, S-013, S-014, S-015, S-016, S-017] is listed as changed but is unchanged: the round's contract is stale
+FAIL tools/pass02_scope_report.py  [pass 02 delivery] is listed as changed but is unchanged: the round's contract is stale
+FAIL tools/collect_evidence.sh  [pass 02 delivery] is listed as changed but is unchanged: the round's contract is stale
+FAIL tools/ui_surface.snapshot.txt  [S-009] is listed as changed but is unchanged: the round's contract is stale
+FAIL .github/workflows/ios-runtime-poc.yml  [pass 02 delivery] is listed as changed but is unchanged: the round's contract is stale
+FAIL Documentation/RELATORIO_FASE_02_RECONSTRUIDA.md  [pass 02 delivery] is listed as changed but is unchanged: the round's contract is stale
+FAIL Documentation/PHASE02_IOS_STABILIZATION_PASS_01.pointer.md  [pass 02 delivery] is listed as changed but is unchanged: the round's contract is stale
+
+regenerated evidence files: 42 (no behaviour, listed in the bundle)
+out-of-scope changes: 43
+
+PASS02_SCOPE_OUT_OF_SCOPE=43
+UI_VISUAL_CHANGES=0 (enforced by the UI_SURFACE_FROZEN rule)
+FILES_DELETED=0 (missing from the tree: 0)
+PHASE04_FUNCTIONAL_CHANGES=0
+PHASE05_STARTED=NO

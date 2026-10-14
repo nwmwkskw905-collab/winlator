@@ -1,0 +1,92 @@
+GitHub Actions iPhoneOS build attempts — 2026-10-14 UTC
+
+Scope: this file records the first four failed CI attempts for this branch. No release IPA passed validation or was published.
+
+RUN 38505249187
+  commit: eed63e5098edc4ff478c237c7b145865270656f5
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38505249187
+  Linux host job: PASS
+  macOS/iPhoneOS job: FAIL at “Build unsigned iPhoneOS app” (xcodebuild exit 65)
+  Prior toolchain, project parser, and static audit steps passed.
+  Raw step logs and failure-artifact download were unavailable to this sandbox (GitHub log/artifact
+  storage returned EOF); no error detail is inferred from this run alone.
+
+RUN 38505466371
+  commit: a9210b0814b20696e9a67664840a94a67e03d295
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38505466371
+  Linux host job: PASS
+  macOS/iPhoneOS job: FAIL at “Build unsigned iPhoneOS app” (xcodebuild exit 65)
+  The GitHub check-run annotations exposed these compiler diagnostics:
+    ios/RuntimeCore/src/runtime_memory.c:401:10: error: call to undeclared function 'mach_vm_region';
+      ISO C99 and later do not support implicit function declarations
+    iPhoneOS26.5.sdk/usr/include/mach/mach_vm.h:1:2: error: mach_vm.h unsupported.
+    1 | #error mach_vm.h unsupported.
+  The compiler path identifies Xcode 26.6 / iPhoneOS SDK 26.5. The public
+  `<mach/mach_vm.h>` header was therefore not valid for the iPhoneOS target, despite being
+  guarded by `__APPLE__`; the static include audit had not previously known this limitation.
+
+RUN 38506076451
+  commit: 298c0e10689ae7888c17f9954b826f9e5419e23d
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38506076451
+  Linux host job: PASS. The Apple static audits and `xcodebuild -list` also passed.
+  The replacement `vm_region_64` call compiled; the unsigned build and IPA packaging steps
+  reported success. The following package-validation step failed (exit 1), so the release upload
+  was skipped. The check-run annotation exposed only the final Xcode build-log lines (including
+  a non-fatal orientation warning), not the validator's failing assertion. The runner artifact
+  and raw logs could not be downloaded in this sandbox (GitHub result storage returned EOF).
+  A transient IPA was packaged on the runner, but no validated/release IPA artifact or SHA-256
+  was published. The precise validator failure is not known from available evidence.
+
+RUN 38506481869
+  commit: e471edc30c81df70fcc17b65c9d14bc5cc3c16ac
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38506481869
+  Linux host job: PASS. Apple static audits and the Xcode parser gate passed.
+  The unsigned iPhoneOS build and IPA packaging passed; validation failed at the architecture
+  check. The newly added validation-log annotation exposed the exact error:
+    lipo: unknown architecture specification flag:
+      /Users/runner/work/_temp/winlator-ipa-inspect/Payload/WinlatorIOS.app/WinlatorIOS
+      in specifying -verify_arch operation
+  Cause: Apple's `lipo` expects the input binary before `-verify_arch`; placing it after the
+  variadic architecture argument made `lipo` interpret the path as another architecture.
+  The workflow command now follows the requested order: `xcrun lipo "$EXECUTABLE" -verify_arch arm64`, followed by `xcrun lipo -archs "$EXECUTABLE"`. It also explicitly tests ZIP integrity and retains the other IPA checks; a new run is required.
+
+CORRECTION / DIAGNOSTICS APPLIED AFTER THESE RUNS
+  The Apple memory-observation implementation now uses `vm_region_64` and types declared by
+  `<mach/mach.h>`, and the Apple-header audit now rejects `<mach/mach_vm.h>` on iPhoneOS.
+  The IPA validation step captures its complete console output to an evidence log; the failure
+  reporter emits validator failures as GitHub check annotations. The `lipo` argument order was
+  corrected after run 38506481869. That correction is not validated by a subsequent Apple run yet.
+
+RESULT BEFORE THE FOLLOW-UP SUCCESS (historical status at time of writing)
+  BUILD_FAILED: no validated IPA or release artifact is available. Runs 38506076451 and
+  38506481869 each created a transient unsigned IPA before package validation failed, but neither
+  uploaded a release. No IPA SHA-256 is therefore claimed. No physical iPhone test occurred
+  (DEVICE_VALIDATION_PENDING); the Windows runtime remains RUNTIME_INCOMPLETE.
+
+
+FOLLOW-UP SUCCESS — RUN 38516877338 (2026-10-14 UTC)
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38516877338
+  Commit: 02223eef9a5397e0d24688fc4c78a69d5b356578
+  Linux host tests: PASS. macOS/iPhoneOS build and IPA validation: PASS.
+  The validator passed ZIP integrity, Payload/app structure, bundle/platform metadata, iPhoneOS
+  platform, ARM64 verification/listing (`lipo -verify_arch arm64`, `lipo -archs`), unsigned
+  signature/provisioning state, and dependency inspection (`otool -L`). Signing was skipped because
+  the pull-request run had no signing secrets.
+  Published artifact: Winlator-iOS-Release-38516877338, containing Winlator-iOS-unsigned.ipa.
+  Artifact ZIP: https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip
+  IPA SHA-256: 66c0b3bcf686fa374bd247eaac94af4063618e2bf25ad14eb5dfecf4e94482cd
+  This is CI build/package evidence only. No physical iPhone installation or Windows EXE runtime
+  test occurred; DEVICE_VALIDATION_PENDING and RUNTIME_INCOMPLETE remain unchanged.
+
+
+FOLLOW-UP REPEAT — RUN 38517367865 (2026-10-14 UTC)
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38517367865
+  Commit: 1305c69fe3f931c81af92703a3a6fb277bfc8d69
+  Linux host tests: PASS. macOS/iPhoneOS build and IPA validation: PASS (second successful run).
+  The Xcode parser/audits, unsigned ARM64 build, IPA packaging, and complete package validator
+  all passed. Signing steps were skipped because this PR run had no signing secrets.
+  Published artifact: Winlator-iOS-Release-38517367865, containing Winlator-iOS-unsigned.ipa.
+  Artifact ZIP: https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip
+  IPA SHA-256: 6e067b4394d4eb6a2be27771e9f2162e4cf000b7d7f10dec5b41600f2d26b248
+  This is build/package evidence only. No physical iPhone install or Windows EXE runtime test
+  occurred; DEVICE_VALIDATION_PENDING and RUNTIME_INCOMPLETE remain unchanged.

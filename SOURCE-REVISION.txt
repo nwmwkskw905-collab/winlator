@@ -1,0 +1,65 @@
+Winlator iOS integration — provenance at import
+Generated: 2026-10-14 UTC
+
+TARGET REPOSITORY
+  https://github.com/nwmwkskw905-collab/winlator
+  session branch: arena/f755ab5e-winlator (fixed by the Arena session)
+  base commit: 25d5faf827d064b2bd145f43293c231c02519f0a (Initial commit)
+
+IMPORTED SOURCE
+  repository: https://github.com/nwmwkskw905-collab/port-winlator-ios
+  imported ref: refs/heads/main
+  imported commit: a37546267e3974bc260140c567c8d0fc46b95421
+  imported path: ios/ plus the source repository's LICENSE
+  branch also examined: ios-phase-02-reconstructed-poc
+  branch tip: 0fefb9cdfccd55d710cfc515fd400c024ff34158
+  note: the source repository labels `ios/` PHASE_02_RECONSTRUCTED_POC; it is a diagnostic harness, not a Windows runtime.
+
+ALL PORT-REPOSITORY BRANCHES OBSERVED
+  main @ a37546267e3974bc260140c567c8d0fc46b95421
+  ios-phase-02-reconstructed-poc @ 0fefb9cdfccd55d710cfc515fd400c024ff34158
+  No other branch heads were returned by `git ls-remote --heads` at inspection time.
+
+MAIN BRANCH HISTORY EXAMINED (newest to oldest)
+  a37546267e3974bc260140c567c8d0fc46b95421 Resolve remaining Phase 02 iOS blockers and prepare physical execution probe
+  1264c6378089561a91f79c60a094830d82ed0089 Fix iPhone Run 03 crash path and add physical progress diagnostics
+  d83332a2aa598dc01bff357dd3d1a9b66cae2a6e Resolve Phase 02 iOS JIT and sandbox blockers after physical run 02
+  f81dda2ca6d954a8fa236a528ad0d41530c8ed16 Stabilize Phase 02 iOS runtime after physical validation
+  b803e8993d9810b194c272f79e9c3ced025e03ff Fix Apple CI run 05: isolate Linux icache flush from Apple targets
+  d24829c56a621fcbaee0cbd93633c73f8c2c0fae Expose platform summary from the harness API; add interface and bridge syntax audits
+  ea1a9269322220b219eccc983ba0f2a694ea36cd Fix Apple CI run 03: split macOS JIT write-protect API from iOS
+  need1c544a4e62d56dd107771f67049dadc80b62c Fix Apple CI run 02: platform-correct randomness and capacity-based deep-path test
+  c36bebe053e6a14f09a05fc1e4a32d99c960a490 Fix Apple CI blockers: quoting in generated pbxproj and evidence path in workflow
+  864e1ee7fdbebdb0196de58e71aa4b7296067980 Merge pull request #1 from nwmwkskw905-collab/ios-phase-02-reconstructed-poc
+  0fefb9cdfccd55d710cfc515fd400c024ff34158 Reconstruct Phase 02 iOS Runtime PoC and CI validation
+  74f401e3af8a0e1b873815085fc91285cb0d7b6d Import Winlator iOS port through Phase 04
+
+ANDROID SUBMODULES EXAMINED, NOT NEEDED BY THIS IOS-ONLY DIAGNOSTIC BUILD
+  port repository `.gitmodules` lists app, vortek and gladio, all on main.
+  brunodev85/winlator-app main @ 3981d86efa4f333b2a34a7da8b6521476cd8c8b9
+  brunodev85/vortek main @ b1730c5def9b575672e671aee11d79ae7adc63d1
+  brunodev85/gladio main @ 116c0d14dedbea3bd057f98f1db138bb1efe225e
+  Vortek is a Vulkan wrapper for the Winlator host driver; Gladio is a GLES/OpenGL wrapper.
+  These Android/Linux components are not Darwin/Metal backends and were intentionally not
+  initialized or copied into the iOS target. No iOS build dependency points to them.
+
+UPSTREAM REFERENCES EXAMINED (not integrated as runtime dependencies)
+  Winlator Android: brunodev85/winlator main @ b6b2259158cf38d06067c34430d840d56b46d220
+  Winlator Android application repo: brunodev85/winlator-app main @ 3981d86efa4f333b2a34a7da8b6521476cd8c8b9
+  Box64 upstream: ptitSeb/box64 main @ 4437c9b8b1307409261500915ada9012aa04def8
+  Box64 iOS library: cloverfield11/box64-ios-library main @ dddfcd4a8e1dedf1d0f4a4acf013b7b8fe9dde8b
+  BoxiOS: cloverfield11/BoxiOS main @ 90d738fd36a62592ae5097fb8746a445485e7c7c
+  Box64 revision cited by the source repo's Phase 04 report: 2f130fab1d6e1a4ee8a71dc60cfdfcc839ad192a
+
+No Wine source, PE loader, Box64 runtime library, Android APK, Android ELF library, Mesa driver,
+Vortek/Gladio binary, or Windows application payload was copied into the iOS app target.
+
+LOCAL PACKAGING CHANGES
+  The generated Xcode product is named WinlatorIOS so the IPA payload is Payload/WinlatorIOS.app;
+  the Xcode target and scheme remain WinlatorPhase02. The imported project's deployment target
+  was raised from 16.0 to the requested iOS 17.0. The home-screen label is “Winlator iOS Probe”
+  to identify this honestly as a diagnostic proof of concept, not a Windows runtime. After the
+  first iPhoneOS CI compile exposed that `mach/mach_vm.h` is unsupported by the iPhoneOS SDK,
+  `runtime_memory.c` was changed to use the public `vm_region_64` interface from `mach/mach.h`.
+  The manual GitHub Actions workflow and release reports were added in the target repository;
+  PRs to main run the unsigned build without signing secrets, while workflow_dispatch may use configured secrets.
