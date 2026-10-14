@@ -1,0 +1,176 @@
+# executable-memory abstraction tests on linux
+ok   the plan is never empty
+ok   the plan prefers one of the two real mechanisms
+ok   the first choice has a real name
+ok   rank(plan[0]) == 0
+ok   rank(plan[1]) == 1
+ok   the empty backend is not in the plan
+ok   the empty backend is named 'none'
+ok   at least one backend exists on a host that can run these tests
+ok   the anonymous W^X backend is supported where mmap/anonymous is
+ok   RT_EXEC_BACKEND_NONE is never reported supported
+ok   an unsupported MAP_JIT carries the real refusal errno
+# backends measured on linux: supported=1
+#   anon-wx  supported=1 planned=1 errno=0 (anonymous mapping flipped RW <-> R-X (strict W^X))
+#   map-jit  supported=0 planned=0 errno=95 (MAP_JIT region with the platform write-protect window)
+#   plan[0]=anon-wx
+#   plan[1]=map-jit
+ok   the capability model answers
+ok   at least one executable-memory backend on this host
+ok   the model reports the plan's first choice as the planned backend
+ok   this host can allocate an executable-capable arena
+ok   this host can write into it
+ok   this host can request the executable state
+ok   this host can reopen the arena for a rewrite
+ok   can_execute is either 'platform allows' or 'not determined', never a guess
+ok   the model does not claim an observation that has not happened
+# capabilities: planned=anon-wx map_jit=0 can_execute=-1
+ok   the graph has a usable number of edges
+ok   asking for the edge count alone reports the same number
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no execution path depends on the object-mapping experiment
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   the object axis only supplies options or is refused (never a hard dependency of the runtime)
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   every edge endpoint is a known node
+ok   no node depends on itself
+ok   every edge has a known relation
+ok   every edge states its reason
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   no dependency is listed twice
+ok   the object axis only supplies options or is refused (never a hard dependency of the runtime)
+ok   every node has a name (the report is read by people)
+ok   every node has a name (the report is read by people)
+ok   every node has a name (the report is read by people)
+ok   every node has a name (the report is read by people)
+ok   every node has a name (the report is read by people)
+ok   every node has a name (the report is read by people)
+ok   every node has a name (the report is read by people)
+ok   every node has a name (the report is read by people)
+ok   the four relations are named
+ok   the graph renders a summary
+ok   the summary carries all six counts
+ok   the summary reports the real node count, not a written-down one
+ok   the summary reports the real edge count
+ok   every reported count equals the count recomputed from the edge list
+ok   the dependent consumers are derived from the data (a duplicated edge cannot inflate them)
+# capability graph: nodes=8 edges=9 signing_edges=3 map_jit_in_edges=1 effective_execute_in_edges=3 execution_consumers=2 (recomputed consumers=2)
+ok   a summary that does not fit is refused instead of truncated
+ok   the execution-chain records are recognised
+ok   the object-mapping records are not execution-chain records (a blocked experiment is not a blocked runtime)
+ok   the emitter produced a payload
+ok   the abstraction allocated an arena
+ok   the arena is usable
+ok   the reported backend is the arena's backend
+# arena backend=anon-wx kind=0 map_jit_attempted=0
+ok   the protection of a fresh arena is either observed or reported unobservable
+ok   a fresh arena is writable
+ok   a fresh arena is not executable (no W+X mapping is ever created)
+ok   calling an arena that is not executable is refused with EINVAL
+ok   the payload was written through the backend's own protocol
+ok   the instruction cache was synchronised
+ok   the executable state was requested
+ok   after the request the mapping really has execute permission on this host
+ok   and it is no longer writable: strict W^X held across the transition
+# observed protection after R-X request: R-X
+ok   the generated code was called and returned
+ok   the call returned 42 from the emitted payload
+# executed payload returned 42
+ok   the arena was reopened for writing
+ok   the second payload was emitted
+ok   the rewrite was written through the same protocol
+ok   the cache was synchronised after the rewrite
+ok   the executable state was requested again
+ok   the rewritten payload returned 4242 from real execution
+ok   the arena was released
+ok   the arena struct is cleared, so a second destroy is a no-op
+ok   destroying a cleared arena is harmless
+ok   writing into a zeroed arena is refused
+ok   making a zeroed arena executable is refused
+ok   allocating into a NULL out parameter is refused
+ok   allocating zero bytes is refused
+ok   a small arena for the bounds checks
+ok   a write that would cross the end of the arena is refused (no overflow)
+ok   an icache request beyond the arena is refused
+ok   cleanup of the bounds-check arena
+ok   a MAP_JIT preference is either honoured or reported as not honoured
+ok   the mismatch between asked and used backend is reported
+ok   cleanup of the preferred-backend arena
+ok   a page for the protection query
+ok   a fresh RW mapping is observed as RW (no execute)
+ok   the R-X request was accepted
+ok   the observation follows the request on a host that grants execute
+ok   the observed bits render as a protection string
+ok   a NULL range is refused
+ok   a zero length is refused
+ok   a NULL out parameter is refused
+ok   no bits render as '-'
+ok   the read-only two-view mapping was created
+ok   the read-write and read-only views alias the same memory
+ok   a byte written through the RW view is visible through the read-only view
+ok   the read-only mapping was destroyed
+ok   no directory is refused with EINVAL instead of guessing one
+== 164 checks, 0 failures ==

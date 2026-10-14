@@ -1,0 +1,32 @@
+[  7%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/darwin_platform.c.o
+[  7%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/linux_platform.c.o
+[ 11%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_memory.c.o
+[ 14%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_exec_memory.c.o
+[ 18%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_dual_mapping.c.o
+[ 22%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_jit.c.o
+[ 29%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_threads.c.o
+[ 29%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_cpu_abi.c.o
+[ 33%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_signals.c.o
+[ 37%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_filesystem.c.o
+[ 40%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_ipc.c.o
+[ 44%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_context.c.o
+[ 48%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_loader.c.o
+[ 51%] Building C object CMakeFiles/phase02_runtime_core.dir/Diagnostics/src/phase02_log.c.o
+[ 55%] Building C object CMakeFiles/phase02_runtime_core.dir/Diagnostics/src/phase02_harness.c.o
+[ 59%] Building C object CMakeFiles/phase02_runtime_core.dir/Diagnostics/src/phase02_progress.c.o
+[ 62%] Building C object CMakeFiles/phase02_runtime_core.dir/Diagnostics/src/phase02_execution_policy.c.o
+[ 66%] Building C object CMakeFiles/phase02_runtime_core.dir/Diagnostics/src/phase02_capability_graph.c.o
+[ 70%] Linking C static library libphase02_runtime_core.a
+[ 70%] Built target phase02_runtime_core
+[ 74%] Building C object CMakeFiles/phase02_poc.dir/RuntimePoC/main.c.o
+[ 77%] Building C object CMakeFiles/phase02_unit_tests.dir/Tests/test_runtime_core.c.o
+[ 81%] Linking C executable phase02_poc
+[ 81%] Built target phase02_poc
+[ 85%] Building C object CMakeFiles/phase02_run_selected_tests.dir/Tests/test_run_selected.c.o
+[ 88%] Linking C executable phase02_unit_tests
+[ 92%] Linking C executable phase02_run_selected_tests
+[ 92%] Built target phase02_unit_tests
+[ 96%] Building C object CMakeFiles/phase02_exec_memory_tests.dir/Tests/test_exec_memory.c.o
+[ 96%] Built target phase02_run_selected_tests
+[100%] Linking C executable phase02_exec_memory_tests
+[100%] Built target phase02_exec_memory_tests

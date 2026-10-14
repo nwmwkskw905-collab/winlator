@@ -1,0 +1,20 @@
+== pass 05 negative controls (every detector must fire, then the tree is restored)
+ok   control A_execute_while_deferred: phase02_run_selected_tests reported 'simulated iOS-class target defers entering written memory (/home/user/winlator/ios/Tests/test_run_selected.c:647)'
+ok   control B_fabricated_value_without_call: phase02_exec_memory_tests reported 'the rewritten payload returned 4242 from real execution (/home/user/winlator/ios/Tests/test_exec_memory.c:211)'
+ok   control C_rewrite_icache_sync_removed: detected by tools/audit_jit_causal_graph.py: 'FAIL J7: the rewritten payload is executed without a new icache flush'
+ok   control D_protection_presumed_not_observed: phase02_exec_memory_tests reported 'a fresh arena is writable (/home/user/winlator/ios/Tests/test_exec_memory.c:165)'
+ok   control E_loader_pass_without_value: detected by tools/audit_jit_causal_graph.py: 'FAIL J8: the loader PASS does not carry the value the entry point returned'
+ok   control F_refusal_recorded_as_port_defect: detected by tools/audit_shm_backend.py: 'FAIL S6: the log does not separate the named namespace from shared memory in general'
+ok   control G_execution_path_requires_named_shm: detected by tools/audit_shm_requirements.py: "FAIL R2: an execution/memory path calls the named POSIX namespace: ['RuntimeCore/src/runtime_loader.c']"
+ok   control H_dependency_counted_twice: phase02_exec_memory_tests reported 'no dependency is listed twice (/home/user/winlator/ios/Tests/test_exec_memory.c:383)'
+ok   control I_requested_entitlement_as_granted: detected by tools/audit_entitlement_config.py: "FAIL E3: Diagnostics/src/phase02_harness.c:1221 claims a granted capability: 'entitlement is granted'"
+ok   control J_experiment_record_as_execution: detected by tools/audit_capability_graph.py: 'FAIL C4: the classifier accepts "memory.* records: an experiment record would be counted as an execution-chain blocker'
+-- restored tree
+ok   control green_after_restore_audit_jit_causal_graph: tools/audit_jit_causal_graph.py green after restore
+ok   control green_after_restore_audit_shm_backend: tools/audit_shm_backend.py green after restore
+ok   control green_after_restore_audit_shm_requirements: tools/audit_shm_requirements.py green after restore
+ok   control green_after_restore_audit_entitlement_config: tools/audit_entitlement_config.py green after restore
+ok   control green_after_restore_audit_capability_graph: tools/audit_capability_graph.py green after restore
+ok   control green_after_restore_phase02_run_selected_tests: phase02_run_selected_tests: all checks pass
+ok   control green_after_restore_phase02_exec_memory_tests: phase02_exec_memory_tests: all checks pass
+PASS05_NEGATIVE_CONTROLS=17/17

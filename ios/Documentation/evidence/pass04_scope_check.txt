@@ -1,0 +1,105 @@
+== pass 04 scope check (base d83332a, the commit physical run 03 was built from) ==
+-- files changed by this pass under ios/:
+    ios/CMakeLists.txt                                 |  17 +
+    ios/Diagnostics/include/phase02_capability_graph.h |  84 +++
+    ios/Diagnostics/include/phase02_execution_policy.h | 134 ++++
+    ios/Diagnostics/include/phase02_progress.h         |  89 +++
+    ios/Diagnostics/src/phase02_capability_graph.c     | 160 ++++
+    ios/Diagnostics/src/phase02_execution_policy.c     | 242 ++++++
+    ios/Diagnostics/src/phase02_harness.c              | 325 +++++++-
+    ios/Diagnostics/src/phase02_progress.c             | 255 +++++++
+    ios/Documentation/IPHONE13_PHYSICAL_RUN_03.md      |  66 ++
+    ios/Documentation/PHASE02_IOS_ERROR_LEDGER.md      | 203 +++++
+    .../PHASE02_SHM_CONSUMER_INVENTORY.md              |  51 ++
+    ios/Documentation/evidence/ADDRESS_run.log         | 692 +++++++++++++++++
+    ios/Documentation/evidence/UNDEFINED_run.log       | 692 +++++++++++++++++
+    ios/Documentation/evidence/aarch64_binary_arch.txt |   2 +-
+    ios/Documentation/evidence/aarch64_build.log       |  51 +-
+    .../evidence/aarch64_cmake_configure.log           |  17 +-
+    .../evidence/aarch64_exec_memory_tests.log         | 176 +++++
+    .../evidence/aarch64_phase02_report.txt            |  22 +-
+    .../evidence/aarch64_run_selected_tests.log        | 316 ++++++++
+    .../evidence/aarch64_suite_stdout.log              |  22 +-
+    ios/Documentation/evidence/apple_api_audit.txt     |   2 +-
+    ios/Documentation/evidence/apple_include_audit.txt |   2 +-
+    .../evidence/fix06_negative_controls.txt           |   6 +-
+    ios/Documentation/evidence/host_build.log          |  39 +-
+    .../evidence/host_cmake_configure.log              |  17 +-
+    ios/Documentation/evidence/host_ctest.log          |  14 +-
+    ios/Documentation/evidence/host_phase02_report.txt |  22 +-
+    .../evidence/host_run_selected_tests.log           | 316 ++++++++
+    ios/Documentation/evidence/host_suite_stdout.log   |  22 +-
+    ios/Documentation/evidence/interface_audit.txt     |   2 +-
+    ios/Documentation/evidence/inventory_sha256.txt    |  49 +-
+    ios/Documentation/evidence/ios_generate.log        |   4 +-
+    .../ios_stabilization_negative_controls.txt        |  12 +-
+    .../evidence/jit_causal_graph_audit.txt            |   4 +-
+    ios/Documentation/evidence/link_symbol_audit.txt   |  21 +-
+    ios/Documentation/evidence/pass01_scope_check.txt  |  75 +-
+    ios/Documentation/evidence/pass02_scope_check.txt  |  75 +-
+    .../evidence/pass03_negative_controls.txt          |   4 +-
+    ios/Documentation/evidence/pass03_scope_check.txt  | 126 +++-
+    .../evidence/pass04_negative_controls.txt          |  26 +
+    ios/Documentation/evidence/pass04_scope_check.txt  |   2 +
+    .../evidence/pass05_audit_apple_apis.txt           |  18 +
+    .../evidence/pass05_audit_apple_includes.txt       |   6 +
+    .../evidence/pass05_audit_capability_graph.txt     |   7 +
+    .../evidence/pass05_audit_entitlement_config.txt   |   8 +
+    .../evidence/pass05_audit_fix06_contracts.txt      |  11 +
+    .../evidence/pass05_audit_interfaces.txt           |  14 +
+    .../evidence/pass05_audit_ios_stabilization.txt    |  19 +
+    .../evidence/pass05_audit_jit_causal_graph.txt     |  16 +
+    .../evidence/pass05_audit_platform_composition.txt |  65 ++
+    .../evidence/pass05_audit_shm_backend.txt          |  10 +
+    .../evidence/pass05_audit_shm_requirements.txt     |   6 +
+    .../evidence/pass05_fix06_negative_controls.txt    |  24 +
+    .../evidence/pass05_host_report_all.txt            |  89 +++
+    .../evidence/pass05_pass03_controls.txt            |  22 +
+    .../evidence/pass05_pass04_controls.txt            |  26 +
+    .../evidence/pass05_pass05_controls.txt            |  20 +
+    ...ass05_platform_composition_negative_control.txt |  70 ++
+    .../pass05_stabilization_negative_controls.txt     |  56 ++
+    .../evidence/pass05_xcodeproj_validation.txt       |  66 ++
+    .../evidence/platform_composition_audit.txt        |  33 +-
+    .../platform_composition_negative_control.txt      |  22 +-
+    ios/Documentation/evidence/sanitizers.txt          |   2 +
+    ios/Documentation/evidence/shm_backend_audit.txt   |   4 +-
+    ios/RuntimeCore/include/runtime_exec_memory.h      | 148 ++++
+    ios/RuntimeCore/include/runtime_memory.h           |  42 ++
+    ios/RuntimeCore/include/runtime_signals.h          |   8 +-
+    ios/RuntimeCore/src/runtime_dual_mapping.c         |  30 +-
+    ios/RuntimeCore/src/runtime_exec_memory.c          | 401 ++++++++++
+    ios/RuntimeCore/src/runtime_jit.c                  |  74 +-
+    ios/RuntimeCore/src/runtime_loader.c               |  64 +-
+    ios/RuntimeCore/src/runtime_memory.c               | 170 +++++
+    ios/RuntimeCore/src/runtime_signals.c              |  34 +-
+    ios/RuntimePoC/Phase02Bridge.m                     |  69 +-
+    ios/RuntimePoC/main.c                              |  38 +-
+    ios/Tests/test_exec_memory.c                       | 489 ++++++++++++
+    ios/Tests/test_run_selected.c                      | 826 +++++++++++++++++++++
+    ios/WinlatorPhase02.xcodeproj/project.pbxproj      |  24 +
+    ios/tools/audit_capability_graph.py                | 258 +++++++
+    ios/tools/audit_entitlement_config.py              |   7 +-
+    ios/tools/audit_jit_causal_graph.py                |  86 ++-
+    ios/tools/audit_shm_backend.py                     |  60 +-
+    ios/tools/audit_shm_requirements.py                | 223 ++++++
+    ios/tools/build_aarch64_cross.sh                   |   8 +
+    ios/tools/collect_evidence.sh                      |  34 +
+    ios/tools/fake_foundation/Foundation/Foundation.h  |  22 +
+    ios/tools/pass03_negative_controls.py              |  25 +-
+    ios/tools/pass04_negative_controls.py              | 391 ++++++++++
+    ios/tools/pass05_negative_controls.py              | 297 ++++++++
+    ios/tools/run_sanitizers.sh                        |  89 +++
+    90 files changed, 8616 insertions(+), 371 deletions(-)
+-- files deleted by this pass under ios/ (must be empty):
+-- new files added by this pass:
+-- Fase 04 (must be empty):
+-- IPHONE13_PHYSICAL_RUN_01.md / _02.md / 03 (immutable: must be empty):
+-- RuntimePoC/ (SwiftUI surface; only the bridge may change):
+    ios/RuntimePoC/Phase02Bridge.m | 69 +++++++++++++++++++++++++++++++++++++++---
+    ios/RuntimePoC/main.c          | 38 ++++++++++++++++++++++-
+    2 files changed, 102 insertions(+), 5 deletions(-)
+UI_VISUAL_CHANGES=0 (ContentView.swift/WinlatorPhase02App.swift unchanged; 
+                     snapshot tools/ui_surface.snapshot.txt intact)
+PHASE04_FUNCTIONAL_CHANGES=0 (no diff under ios/box64-registers)
+PHASE05_STARTED=NO

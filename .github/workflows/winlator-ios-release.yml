@@ -1,0 +1,539 @@
+name: Winlator iOS Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: winlator-ios-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  runtime-core-tests:
+    name: Runtime diagnostics host tests (Linux; not iOS evidence)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Record host environment
+        run: |
+          set -eu
+          mkdir -p artifacts/host
+          {
+            echo "EVIDENCE_CLASS=HOST_LINUX_X86_64"
+            uname -a
+            gcc --version | head -1
+            cmake --version | head -1
+            python3 --version
+          } | tee artifacts/host/environment.txt
+
+      - name: Build the runtime diagnostics harness
+        run: |
+          set -eu
+          set -o pipefail
+          cmake -S ios -B "$RUNNER_TEMP/winlator-ios-host-build" -DCMAKE_BUILD_TYPE=Debug \
+            2>&1 | tee artifacts/host/cmake-configure.log
+          cmake --build "$RUNNER_TEMP/winlator-ios-host-build" --parallel 2 \
+            2>&1 | tee artifacts/host/cmake-build.log
+
+      - name: Run CTest, unit tests and the diagnostic suite
+        run: |
+          set -eu
+          set -o pipefail
+          ctest --test-dir "$RUNNER_TEMP/winlator-ios-host-build" --output-on-failure \
+            2>&1 | tee artifacts/host/ctest.log
+          "$RUNNER_TEMP/winlator-ios-host-build/phase02_unit_tests" \
+            2>&1 | tee artifacts/host/unit-tests.log
+          "$RUNNER_TEMP/winlator-ios-host-build/phase02_poc" --suite all \
+            --export "$RUNNER_TEMP/winlator-ios-host-build/host-report.txt" \
+            2>&1 | tee artifacts/host/suite.log
+          cp "$RUNNER_TEMP/winlator-ios-host-build/host-report.txt" artifacts/host/
+          tail -1 artifacts/host/host-report.txt | tee artifacts/host/summary.txt
+          grep -q '^# records=.* fail=0 ' artifacts/host/host-report.txt
+
+      - name: Upload Linux host evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: Winlator-iOS-host-tests-${{ github.run_id }}
+          path: artifacts/host/
+          if-no-files-found: error
+          retention-days: 30
+
+  build-iphoneos:
+    name: Build and validate an iPhoneOS ARM64 PoC IPA
+    needs: runtime-core-tests
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      IOS_PROJECT: ios/WinlatorPhase02.xcodeproj
+      IOS_SCHEME: WinlatorPhase02
+      IOS_BUNDLE_ID: io.winlator.phase02.reconstructed
+      EVIDENCE_DIR: ${{ github.workspace }}/ios/Documentation/evidence
+    steps:
+      - name: Checkout source and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verify Apple toolchain and target SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          {
+            echo "EVIDENCE_CLASS=MACOS_RUNNER_BUILD; PRODUCT=IOS_DEVICE_ARM64"
+            sw_vers
+            uname -a
+            echo "--- Xcode ---"
+            xcodebuild -version
+            echo "--- active developer directory ---"
+            xcode-select -p
+            echo "--- iPhoneOS SDK ---"
+            xcrun --sdk iphoneos --show-sdk-version
+            echo "--- compiler ---"
+            clang --version | head -3
+            echo "--- Swift ---"
+            swift --version
+            echo "--- CMake ---"
+            cmake --version | head -1
+          } | tee "$EVIDENCE_DIR/ci_ios_environment.txt"
+
+      - name: Initialize submodules
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init --recursive
+          git submodule status
+
+      - name: Regenerate and structurally validate the Xcode project
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ios/tools/generate_xcodeproj.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_generate.log"
+          python3 ios/tools/validate_xcodeproj.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_project_validation.log"
+
+      - name: Run Apple API, SDK header and target-composition audits
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ios/tools/audit_apple_apis.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_apple_api_audit.log"
+          python3 ios/tools/audit_apple_includes.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_apple_include_audit.log"
+          python3 ios/tools/audit_interfaces.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_interface_audit.log"
+          python3 ios/tools/audit_platform_composition.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_platform_composition.log"
+          grep -q '^PLATFORM_COMPOSITION_AUDIT=0$' "$EVIDENCE_DIR/ci_ios_platform_composition.log"
+          python3 ios/tools/audit_fix06_contracts.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_fix06_audit.log"
+          grep -q '^FIX06_CONTRACTS_AUDIT=0$' "$EVIDENCE_DIR/ci_ios_fix06_audit.log"
+          python3 ios/tools/audit_ios_stabilization.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_stabilization_audit.log"
+          grep -q '^IOS_STABILIZATION_AUDIT=0$' "$EVIDENCE_DIR/ci_ios_stabilization_audit.log"
+          python3 ios/tools/audit_entitlement_config.py 2>&1 | tee "$EVIDENCE_DIR/ci_ios_entitlement_audit.log"
+          grep -q '^ENTITLEMENT_CONFIG_AUDIT=0$' "$EVIDENCE_DIR/ci_ios_entitlement_audit.log"
+          sh ios/tools/check_bridge_syntax.sh 2>&1 | tee "$EVIDENCE_DIR/ci_ios_bridge_syntax.log"
+          sh ios/tools/audit_link_symbols.sh 2>&1 | tee "$EVIDENCE_DIR/ci_ios_link_symbol_audit.log"
+
+      - name: Xcode parser gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -project "$IOS_PROJECT" -list 2>&1 | tee "$EVIDENCE_DIR/ci_ios_xcodebuild_list.log"
+          grep -q "$IOS_SCHEME" "$EVIDENCE_DIR/ci_ios_xcodebuild_list.log"
+
+      - name: Select signed or unsigned packaging without exposing credentials
+        id: signing
+        shell: bash
+        env:
+          IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_SIGNING_IDENTITY: ${{ secrets.IOS_SIGNING_IDENTITY }}
+          IOS_EXPORT_METHOD: ${{ secrets.IOS_EXPORT_METHOD }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$IOS_CERTIFICATE_P12_BASE64" && \
+                -n "$IOS_CERTIFICATE_PASSWORD" && \
+                -n "$IOS_PROVISIONING_PROFILE_BASE64" && \
+                -n "$IOS_TEAM_ID" ]]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+            echo 'mode=SIGNED_CANDIDATE' >> "$GITHUB_OUTPUT"
+            echo 'SIGNING_INPUTS=COMPLETE; PROFILE_AND_CERTIFICATE_VALIDATION_REQUIRED' \
+              | tee "$EVIDENCE_DIR/ci_ios_signing_mode.txt"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'mode=UNSIGNED_IPA' >> "$GITHUB_OUTPUT"
+            echo 'SIGNING=none; UNSIGNED_IPA=true; reason=SIGNING_SECRETS_INCOMPLETE' \
+              | tee "$EVIDENCE_DIR/ci_ios_signing_mode.txt"
+          fi
+
+      - name: Validate and import signing material into an ephemeral keychain
+        id: signing-setup
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        env:
+          IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_SIGNING_IDENTITY: ${{ secrets.IOS_SIGNING_IDENTITY }}
+          IOS_EXPORT_METHOD: ${{ secrets.IOS_EXPORT_METHOD }}
+        run: |
+          set -euo pipefail
+          set +x
+          WORK="$RUNNER_TEMP/winlator-ios-signing"
+          KEYCHAIN="$WORK/signing.keychain-db"
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$WORK" "$PROFILE_DIR"
+          KEYCHAIN_PASSWORD="$(/usr/bin/openssl rand -hex 24)"
+          [[ "$IOS_TEAM_ID" =~ ^[A-Z0-9]{10}$ ]] || { echo 'FAIL: IOS_TEAM_ID format is invalid'; exit 1; }
+          if [[ "$IOS_SIGNING_IDENTITY" == *$'\n'* || "$IOS_SIGNING_IDENTITY" == *$'\r'* ]]; then
+            echo 'FAIL: IOS_SIGNING_IDENTITY contains a line break'
+            exit 1
+          fi
+          METHOD="${IOS_EXPORT_METHOD:-development}"
+          [[ "$METHOD" == 'development' || "$METHOD" == 'ad-hoc' ]] || {
+            echo 'FAIL: IOS_EXPORT_METHOD must be development or ad-hoc'
+            exit 1
+          }
+          printf '%s' "$IOS_CERTIFICATE_P12_BASE64" | /usr/bin/openssl base64 -d -A -out "$WORK/certificate.p12"
+          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | /usr/bin/openssl base64 -d -A -out "$WORK/profile.mobileprovision"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null 2>&1
+          security set-keychain-settings -lut 21600 "$KEYCHAIN" >/dev/null 2>&1
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null 2>&1
+          security import "$WORK/certificate.p12" -k "$KEYCHAIN" -P "$IOS_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 >/dev/null 2>&1
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN" >/dev/null 2>&1
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain-db >/dev/null 2>&1
+          security default-keychain -s "$KEYCHAIN" >/dev/null 2>&1
+          security cms -D -i "$WORK/profile.mobileprovision" > "$WORK/profile.plist"
+          python3 - "$WORK/profile.plist" <<'PY'
+          import datetime
+          import os
+          import plistlib
+          import re
+          import sys
+
+          path = sys.argv[1]
+          with open(path, "rb") as stream:
+              profile = plistlib.load(stream)
+          expected_team = os.environ["IOS_TEAM_ID"]
+          expected_bundle = os.environ["IOS_BUNDLE_ID"]
+          teams = profile.get("TeamIdentifier", [])
+          if expected_team not in teams:
+              raise SystemExit("Provisioning profile TeamIdentifier does not match IOS_TEAM_ID")
+          entitlements = profile.get("Entitlements", {})
+          app_id = entitlements.get("application-identifier", "")
+          _, dot, pattern = app_id.partition(".")
+          if not dot or not re.fullmatch(re.escape(pattern).replace(r"\*", ".*"), expected_bundle):
+              raise SystemExit("Provisioning profile application-identifier does not match the app bundle ID")
+          expiry = profile.get("ExpirationDate")
+          if isinstance(expiry, datetime.datetime) and expiry.tzinfo is None:
+              expiry = expiry.replace(tzinfo=datetime.timezone.utc)
+          if not isinstance(expiry, datetime.datetime) or expiry <= datetime.datetime.now(datetime.timezone.utc):
+              raise SystemExit("Provisioning profile is expired or has no valid expiration date")
+          method = os.environ.get("IOS_EXPORT_METHOD", "development") or "development"
+          if method not in {"development", "ad-hoc"}:
+              raise SystemExit("IOS_EXPORT_METHOD must be development or ad-hoc")
+          if not profile.get("ProvisionedDevices"):
+              raise SystemExit("Provisioning profile has no registered devices for sideloading")
+          print("PROFILE_VALIDATION=PASS (team, app ID, expiration and device list checked)")
+          PY
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$WORK/profile.plist")
+          [[ "$UUID" =~ ^[A-Fa-f0-9-]+$ ]] || { echo 'FAIL: provisioning profile UUID is invalid'; exit 1; }
+          if [[ -n "$IOS_SIGNING_IDENTITY" ]]; then
+            IDENTITY="$IOS_SIGNING_IDENTITY"
+          elif [[ "$METHOD" == 'ad-hoc' ]]; then
+            IDENTITY='Apple Distribution'
+          else
+            IDENTITY='Apple Development'
+          fi
+          security find-identity -v -p codesigning "$KEYCHAIN" > "$WORK/identities.txt" 2>&1
+          grep -F "$IDENTITY" "$WORK/identities.txt" >/dev/null || {
+            echo 'FAIL: no valid codesigning identity matching IOS_SIGNING_IDENTITY was imported'
+            exit 1
+          }
+          cp "$WORK/profile.mobileprovision" "$PROFILE_DIR/$UUID.mobileprovision"
+          echo "uuid=$UUID" >> "$GITHUB_OUTPUT"
+          echo "method=$METHOD" >> "$GITHUB_OUTPUT"
+          echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
+          echo "keychain=$KEYCHAIN" >> "$GITHUB_OUTPUT"
+          echo 'SIGNING_PROFILE=VALIDATED; PRIVATE_MATERIAL=REDACTED' \
+            | tee "$EVIDENCE_DIR/ci_ios_signing_profile_validation.txt"
+
+      - name: Archive signed iPhoneOS app
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$IOS_PROJECT" \
+            -scheme "$IOS_SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/WinlatorPhase02.xcarchive" \
+            IPHONEOS_DEPLOYMENT_TARGET=17.0 \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
+            CODE_SIGN_IDENTITY="${{ steps.signing-setup.outputs.identity }}" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ steps.signing-setup.outputs.uuid }}" \
+            archive 2>&1 | tee "$EVIDENCE_DIR/ci_ios_xcodebuild_signed.log"
+
+      - name: Export signed IPA for registered devices
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          EXPORT_OPTIONS="$RUNNER_TEMP/WinlatorExportOptions.plist"
+          cat > "$EXPORT_OPTIONS" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>${{ steps.signing-setup.outputs.method }}</string>
+            <key>destination</key><string>export</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>teamID</key><string>$IOS_TEAM_ID</string>
+            <key>provisioningProfiles</key><dict>
+              <key>$IOS_BUNDLE_ID</key><string>${{ steps.signing-setup.outputs.uuid }}</string>
+            </dict>
+          </dict></plist>
+          EOF
+          plutil -lint "$EXPORT_OPTIONS"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/WinlatorPhase02.xcarchive" \
+            -exportPath "$RUNNER_TEMP/WinlatorSignedExport" \
+            -exportOptionsPlist "$EXPORT_OPTIONS" \
+            2>&1 | tee "$EVIDENCE_DIR/ci_ios_export_signed.log"
+          IPA_COUNT=$(find "$RUNNER_TEMP/WinlatorSignedExport" -maxdepth 1 -name '*.ipa' -type f | wc -l | tr -d ' ')
+          IPA_FILE=$(find "$RUNNER_TEMP/WinlatorSignedExport" -maxdepth 1 -name '*.ipa' -type f -print -quit)
+          [[ "$IPA_COUNT" -eq 1 && -n "$IPA_FILE" ]] || { echo 'FAIL: expected exactly one signed IPA'; exit 1; }
+          mkdir -p "$GITHUB_WORKSPACE/Winlator-iOS-Release"
+          cp "$IPA_FILE" "$GITHUB_WORKSPACE/Winlator-iOS-Release/Winlator-iOS-signed.ipa"
+          echo 'IPA_SIGNING=SIGNED; PROFILE=DEVELOPMENT_OR_ADHOC' \
+            | tee "$EVIDENCE_DIR/ci_ios_signed_ipa.txt"
+
+      - name: Build unsigned iPhoneOS app
+        if: steps.signing.outputs.enabled != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project "$IOS_PROJECT" \
+            -scheme "$IOS_SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/WinlatorIOSDerivedData" \
+            IPHONEOS_DEPLOYMENT_TARGET=17.0 \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' \
+            build 2>&1 | tee "$EVIDENCE_DIR/ci_ios_xcodebuild_unsigned.log"
+
+      - name: Package unsigned IPA
+        if: steps.signing.outputs.enabled != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/WinlatorIOSDerivedData/Build/Products/Release-iphoneos/WinlatorIOS.app"
+          [[ -d "$APP" ]] || { echo "FAIL: expected app bundle is missing: $APP"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/WinlatorIOSPackage/Payload" "$GITHUB_WORKSPACE/Winlator-iOS-Release"
+          ditto "$APP" "$RUNNER_TEMP/WinlatorIOSPackage/Payload/WinlatorIOS.app"
+          (cd "$RUNNER_TEMP/WinlatorIOSPackage" && \
+            /usr/bin/ditto -c -k --sequesterRsrc --keepParent Payload \
+              "$GITHUB_WORKSPACE/Winlator-iOS-Release/Winlator-iOS-unsigned.ipa")
+          echo 'SIGNING=none; UNSIGNED_IPA=true' \
+            | tee "$EVIDENCE_DIR/ci_ios_ipa_signing.txt"
+
+      - name: Validate app and IPA platform, architecture, signature and payload
+        id: validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ '${{ steps.signing.outputs.enabled }}' == 'true' ]]; then
+            IPA="$GITHUB_WORKSPACE/Winlator-iOS-Release/Winlator-iOS-signed.ipa"
+          else
+            IPA="$GITHUB_WORKSPACE/Winlator-iOS-Release/Winlator-iOS-unsigned.ipa"
+          fi
+          [[ -s "$IPA" ]] || { echo 'FAIL: IPA missing or empty'; exit 1; }
+          INSPECT="$RUNNER_TEMP/winlator-ipa-inspect"
+          rm -rf "$INSPECT" && mkdir -p "$INSPECT"
+          ditto -x -k "$IPA" "$INSPECT"
+          APP="$INSPECT/Payload/WinlatorIOS.app"
+          [[ -d "$APP" ]] || { echo 'FAIL: Payload/WinlatorIOS.app missing'; exit 1; }
+          [[ -f "$APP/Info.plist" ]] || { echo 'FAIL: app Info.plist missing'; exit 1; }
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")
+          BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
+          [[ -f "$APP/$EXECUTABLE" ]] || { echo 'FAIL: app executable missing'; exit 1; }
+          [[ "$BUNDLE_ID" == "$IOS_BUNDLE_ID" ]] || { echo "FAIL: unexpected bundle ID $BUNDLE_ID"; exit 1; }
+          lipo -verify_arch arm64 "$APP/$EXECUTABLE"
+          file "$APP/$EXECUTABLE" | tee "$EVIDENCE_DIR/ci_ios_executable_file.txt"
+          xcrun vtool -show-build "$APP/$EXECUTABLE" \
+            2>&1 | tee "$EVIDENCE_DIR/ci_ios_load_commands.txt"
+          grep -q 'platform IOS' "$EVIDENCE_DIR/ci_ios_load_commands.txt" || {
+            echo 'FAIL: executable is not an iPhoneOS Mach-O (simulator is not accepted)'
+            exit 1
+          }
+          MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP/Info.plist")
+          [[ "$MINIMUM_OS" == '17.0' ]] || { echo "FAIL: unexpected minimum iOS version $MINIMUM_OS"; exit 1; }
+          echo "MINIMUM_OS=$MINIMUM_OS"
+          if [[ '${{ steps.signing.outputs.enabled }}' == 'true' ]]; then
+            [[ -f "$APP/embedded.mobileprovision" ]] || { echo 'FAIL: signed IPA has no provisioning profile'; exit 1; }
+            codesign --verify --deep --strict --verbose=2 "$APP" \
+              2>&1 | tee "$EVIDENCE_DIR/ci_ios_codesign_verify.txt"
+            if ! codesign -d --entitlements :- "$APP" \
+              > "$EVIDENCE_DIR/ci_ios_embedded_entitlements.plist" 2>"$EVIDENCE_DIR/ci_ios_entitlements_dump.log"; then
+              echo 'ENTITLEMENTS_DUMP=UNAVAILABLE (signature verification passed; no entitlement claim made)' \
+                | tee "$EVIDENCE_DIR/ci_ios_entitlements_dump_status.txt"
+            fi
+            echo 'SIGNATURE=VERIFIED; IPA_KIND=SIGNED_FOR_REGISTERED_DEVICES' \
+              | tee "$EVIDENCE_DIR/ci_ios_signature_status.txt"
+          else
+            [[ ! -e "$APP/embedded.mobileprovision" ]] || { echo 'FAIL: unsigned app unexpectedly contains a provisioning profile'; exit 1; }
+            echo 'SIGNATURE=NONE; IPA_KIND=UNSIGNED_REQUIRES_SIDELOAD_SIGNING' \
+              | tee "$EVIDENCE_DIR/ci_ios_signature_status.txt"
+          fi
+          {
+            echo "app=$APP"
+            echo "executable=$EXECUTABLE"
+            echo "bundle_identifier=$BUNDLE_ID"
+            echo "minimum_os=$MINIMUM_OS"
+            echo "ipa=$IPA"
+            echo "architecture=arm64"
+            echo "platform=iphoneos (LC_BUILD_VERSION platform IOS)"
+            echo "dependencies:"
+            otool -L "$APP/$EXECUTABLE"
+          } | tee "$EVIDENCE_DIR/ci_ios_package_validation.txt"
+          echo "ipa=$IPA" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble release reports and calculate SHA-256
+        id: release
+        shell: bash
+        env:
+          IOS_SIGNED: ${{ steps.signing.outputs.enabled }}
+          IOS_IPA: ${{ steps.validation.outputs.ipa }}
+        run: |
+          set -euo pipefail
+          RELEASE="$GITHUB_WORKSPACE/Winlator-iOS-Release"
+          mkdir -p "$RELEASE"
+          cp BUILD-REPORT.md RUNTIME-REPORT.md DEVICE-TEST-REPORT.md \
+            COMPATIBILITY-MATRIX.md INSTALL-WINDOWS.md THIRD-PARTY-NOTICES.md \
+            SOURCE-REVISION.txt "$RELEASE/"
+          cp "$EVIDENCE_DIR/ci_ios_environment.txt" "$RELEASE/"
+          cp "$EVIDENCE_DIR/ci_ios_package_validation.txt" "$RELEASE/"
+          IPA_NAME=$(basename "$IOS_IPA")
+          HASH=$(shasum -a 256 "$IOS_IPA" | awk '{print $1}')
+          printf '%s  %s\n' "$HASH" "$IPA_NAME" > "$RELEASE/SHA256SUMS.txt"
+          python3 - "$RELEASE/DEVICE-TEST-REPORT.md" "$RELEASE/COMPATIBILITY-MATRIX.md" \
+            "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY" "$HASH" "$IPA_NAME" <<'PY'
+          from pathlib import Path
+          import sys
+
+          device_path, matrix_path, run_id, repository, digest, ipa_name = sys.argv[1:]
+          run_url = f"https://github.com/{repository}/actions/runs/{run_id}"
+          device = Path(device_path)
+          text = device.read_text()
+          old_bullet = "- `NOT_TESTED` — compilação com SDK `iphoneos` nesta execução local (não há Xcode no host)."
+          new_bullet = "- `PASS` — build/export IPA `iphoneos` arm64 e validações de pacote concluídos pelo runner macOS deste run."
+          old_row = "| L — IPA arm64 `iphoneos` | `NOT_TESTED` nesta sessão local | O workflow pode produzir o artifact; valide sua execução e conteúdo separadamente. |"
+          new_row = "| L — IPA arm64 `iphoneos` | `PASS` no runner macOS | IPA, arquitetura, plataforma iPhoneOS e payload validados neste run; isso não é teste em dispositivo. |"
+          if old_bullet not in text or old_row not in text:
+              raise SystemExit("DEVICE-TEST-REPORT source text changed; refusing a partial report update")
+          text = text.replace(old_bullet, new_bullet, 1).replace(old_row, new_row, 1)
+          text += ("\n## Evidência do build deste artifact\n\n"
+                   f"- GitHub Actions: {run_url}\n"
+                   f"- IPA: `{ipa_name}`; SHA-256: `{digest}`.\n"
+                   "- Validação em iPhone físico: `DEVICE_VALIDATION_PENDING` (`NOT_TESTED` por este workflow); não há instalação/execução no telefone.\n")
+          device.write_text(text)
+
+          matrix = Path(matrix_path)
+          text = matrix.read_text()
+          old_build = "| Build iOS para `iphoneos` ARM64 | `NOT_TESTED` nesta sessão | Requer GitHub Actions/macOS/Xcode. |"
+          new_build = f"| Build iOS para `iphoneos` ARM64 | `PASS` neste run | Runner macOS; consulte {run_url} e o BUILD-REPORT. |"
+          old_ipa = "| IPA validado | `NOT_TESTED` nesta sessão | Nenhum IPA local gerado. |"
+          new_ipa = f"| IPA validado | `PASS` neste run | `{ipa_name}`; SHA-256 `{digest}`; payload `iphoneos` ARM64 verificado. |"
+          if old_build not in text or old_ipa not in text:
+              raise SystemExit("COMPATIBILITY-MATRIX source text changed; refusing a partial report update")
+          text = text.replace(old_build, new_build, 1).replace(old_ipa, new_ipa, 1)
+          text += ("\nBuild provenance: " + run_url + "\n"
+                   "This build does not change the PE/Wine/Box64 or physical-device validation status.\n")
+          matrix.write_text(text)
+          PY
+          {
+            echo '# BUILD-REPORT — GitHub Actions'
+            echo
+            echo "- Result: PASS — IPA built and package validation passed."
+            echo "- Runtime status: RUNTIME_INCOMPLETE (diagnostic PoC; no Windows runtime)."
+            echo "- Workflow run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Runner: $(uname -s) $(uname -m)"
+            echo "- Xcode: $(xcodebuild -version | tr '\n' ' ')"
+            echo "- iPhoneOS SDK: $(xcrun --sdk iphoneos --show-sdk-version)"
+            echo "- Minimum iOS target: 17.0"
+            echo "- App bundle: Payload/WinlatorIOS.app"
+            echo "- App executable architecture/platform: arm64 / iphoneos (verified with lipo and vtool)."
+            if [[ "$IOS_SIGNED" == 'true' ]]; then
+              echo "- IPA: Winlator-iOS-signed.ipa"
+              echo "- Signature: verified with codesign; provisioning profile and device list validated."
+            else
+              echo "- IPA: Winlator-iOS-unsigned.ipa"
+              echo "- Signature: none; requires signing/sideloading; not directly installable."
+            fi
+            echo "- SHA-256: ${HASH}  ${IPA_NAME}"
+            echo "- Embedded non-Apple runtime libraries: none verified/linked by this PoC."
+            echo "- Artifact: Winlator-iOS-Release-${GITHUB_RUN_ID}"
+            echo "- Physical-device validation: DEVICE_VALIDATION_PENDING (not tested by this workflow)."
+          } > "$RELEASE/BUILD-REPORT.md"
+          {
+            echo "# Winlator iOS build ${GITHUB_RUN_ID}"
+            echo
+            printf 'IPA: `%s`\n' "$IPA_NAME"
+            printf 'SHA-256: `%s`\n' "$HASH"
+            echo "Signature enabled: ${IOS_SIGNED}"
+            echo "Platform: iphoneos arm64"
+            echo "Runtime: RUNTIME_INCOMPLETE"
+            echo "Device test: NOT_TESTED"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "RELEASE_DIR=$RELEASE" >> "$GITHUB_OUTPUT"
+          echo "IPA_SHA256=$HASH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA, reports and build evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: Winlator-iOS-Release-${{ github.run_id }}
+          path: |
+            Winlator-iOS-Release/
+            ios/Documentation/evidence/ci_ios_*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove signing keychain and provisioning profile
+        if: always() && steps.signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          set +e
+          WORK="$RUNNER_TEMP/winlator-ios-signing"
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$WORK/profile.plist" 2>/dev/null)
+          if [[ -n "$UUID" ]]; then
+            rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
+          fi
+          security delete-keychain "$WORK/signing.keychain-db" >/dev/null 2>&1
+          rm -rf "$WORK"
+
+      - name: Upload diagnostic logs if a prior build step failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Winlator-iOS-build-failure-evidence-${{ github.run_id }}
+          path: ios/Documentation/evidence/ci_ios_*
+          if-no-files-found: warn
+          retention-days: 30

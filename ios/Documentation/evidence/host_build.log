@@ -1,0 +1,5 @@
+[ 70%] Built target phase02_runtime_core
+[ 77%] Built target phase02_unit_tests
+[ 85%] Built target phase02_poc
+[ 92%] Built target phase02_run_selected_tests
+[100%] Built target phase02_exec_memory_tests

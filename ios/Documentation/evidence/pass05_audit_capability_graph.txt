@@ -1,0 +1,7 @@
+ok   C1 EDGE_SET: 8 nodes, 9 edges, no duplicate dependency, reason on every edge and no endpoint outside the node set
+ok   C2 DERIVED_SUMMARY: the summary is computed from the edge list and published in every report
+ok   C3 AXES_SEPARATE: execution and object mapping are separate axes in the graph and in the code
+ok   C4 RECORD_ATTRIBUTION: all 22 execution-chain records map to one node, none to the object axis
+ok   C5 NOT_ONE_PER_RECORD: 22 execution-chain records resolve to 4 root nodes ['PHASE02_NODE_EFFECTIVE_EXECUTE', 'PHASE02_NODE_EXECMEM_ABI', 'PHASE02_NODE_LOADER', 'PHASE02_NODE_MAP_JIT']
+ok   C6 REPORT_CONSISTENT: pass05_host_report_all.txt carries the graph and attributes no execution-chain blocker to the object axis
+CAPABILITY_GRAPH_AUDIT=0

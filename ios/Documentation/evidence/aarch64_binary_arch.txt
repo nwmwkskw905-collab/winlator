@@ -1,0 +1,1 @@
+/home/user/winlator/ios/build/aarch64/phase02_poc: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=0c057e8df162ac5858d73b477e92eb60cb23b152, for GNU/Linux 3.7.0, with debug_info, not stripped

@@ -1,0 +1,6 @@
+ok   R1 INVENTORY_DISCLOSED: 5 inventory rows; every SHM call site in this repository is either disclosed there or lives in the audits/docs
+ok   R2 RUNTIME_NOT_DEPENDENT: no named POSIX SHM call on the execution or memory path (or in box64-registers)
+ok   R3 NOTE_PRESENT: the classification is emitted with the namespace status, the runtime-dependence answer, the alternatives and both references
+ok   R4 INVENTORY_DOC: 5 rows, closed vocabulary, evidence on every REPLACEABLE row, referenced by the note
+ok   R5 ALTERNATIVES_REAL: all 3 alternatives named in the note exist as mechanisms in this tree
+SHM_REQUIREMENTS_AUDIT=0
