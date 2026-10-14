@@ -57,8 +57,23 @@ CORRECTION / DIAGNOSTICS APPLIED AFTER THESE RUNS
   reporter emits validator failures as GitHub check annotations. The `lipo` argument order was
   corrected after run 38506481869. That correction is not validated by a subsequent Apple run yet.
 
-RESULT AT TIME OF WRITING
+RESULT BEFORE THE FOLLOW-UP SUCCESS (historical status at time of writing)
   BUILD_FAILED: no validated IPA or release artifact is available. Runs 38506076451 and
   38506481869 each created a transient unsigned IPA before package validation failed, but neither
   uploaded a release. No IPA SHA-256 is therefore claimed. No physical iPhone test occurred
   (DEVICE_VALIDATION_PENDING); the Windows runtime remains RUNTIME_INCOMPLETE.
+
+
+FOLLOW-UP SUCCESS — RUN 38516877338 (2026-10-14 UTC)
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38516877338
+  Commit: 02223eef9a5397e0d24688fc4c78a69d5b356578
+  Linux host tests: PASS. macOS/iPhoneOS build and IPA validation: PASS.
+  The validator passed ZIP integrity, Payload/app structure, bundle/platform metadata, iPhoneOS
+  platform, ARM64 verification/listing (`lipo -verify_arch arm64`, `lipo -archs`), unsigned
+  signature/provisioning state, and dependency inspection (`otool -L`). Signing was skipped because
+  the pull-request run had no signing secrets.
+  Published artifact: Winlator-iOS-Release-38516877338, containing Winlator-iOS-unsigned.ipa.
+  Artifact ZIP: https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip
+  IPA SHA-256: 66c0b3bcf686fa374bd247eaac94af4063618e2bf25ad14eb5dfecf4e94482cd
+  This is CI build/package evidence only. No physical iPhone installation or Windows EXE runtime
+  test occurred; DEVICE_VALIDATION_PENDING and RUNTIME_INCOMPLETE remain unchanged.

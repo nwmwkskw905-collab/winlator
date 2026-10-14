@@ -8,15 +8,7 @@ on:
     paths:
       - '.github/workflows/winlator-ios-release.yml'
       - 'ios/**'
-      - 'BUILD-REPORT.md'
-      - 'RUNTIME-REPORT.md'
-      - 'DEVICE-TEST-REPORT.md'
-      - 'COMPATIBILITY-MATRIX.md'
-      - 'INSTALL-WINDOWS.md'
-      - 'THIRD-PARTY-NOTICES.md'
-      - 'SOURCE-REVISION.txt'
-      - 'LICENSE'
-      - 'README.md'
+      - '!ios/Documentation/**'
 
 permissions:
   contents: read
@@ -473,30 +465,51 @@ jobs:
 
           device_path, matrix_path, run_id, repository, digest, ipa_name = sys.argv[1:]
           run_url = f"https://github.com/{repository}/actions/runs/{run_id}"
+          def replace_one_line(text, predicate, replacement, label):
+              lines = text.splitlines()
+              matches = [index for index, line in enumerate(lines) if predicate(line)]
+              if len(matches) != 1:
+                  raise SystemExit(f"{label}: expected one source line, found {len(matches)}")
+              lines[matches[0]] = replacement
+              return "\n".join(lines) + "\n"
+
           device = Path(device_path)
           text = device.read_text()
-          old_bullet = "- `BUILD_FAILED` — runs `38505249187`/`38505466371` falharam no compile; `38506076451`/`38506481869` compilaram e empacotaram IPA unsigned transitório, mas falharam na validação, sem publicar release. Ver `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`."
-          new_bullet = "- `PASS` — build/export IPA `iphoneos` arm64 e validações de pacote concluídos pelo runner macOS deste run."
-          old_row = "| L — IPA arm64 `iphoneos` | `BUILD_FAILED` | Os dois runs mais recentes empacotaram IPA transitório, mas a validação falhou antes do upload; nova execução necessária. |"
-          new_row = "| L — IPA arm64 `iphoneos` | `PASS` no runner macOS | IPA, arquitetura, plataforma iPhoneOS e payload validados neste run; isso não é teste em dispositivo. |"
-          if old_bullet not in text or old_row not in text:
-              raise SystemExit("DEVICE-TEST-REPORT source text changed; refusing a partial report update")
-          text = text.replace(old_bullet, new_bullet, 1).replace(old_row, new_row, 1)
+          text = replace_one_line(
+              text,
+              lambda line: line.startswith("- ") and (
+                  "runs `38505249187`" in line or "[run CI " in line
+              ),
+              f"- `PASS` — [run CI {run_id}]({run_url}) compilou e validou IPA unsigned para iPhoneOS ARM64; checks do pacote passaram. Artifact `Winlator-iOS-Release-{run_id}`. Isso não é teste de instalação/execução em dispositivo.",
+              "DEVICE-TEST-REPORT CI evidence",
+          )
+          text = replace_one_line(
+              text,
+              lambda line: line.startswith("| L — IPA arm64 `iphoneos` |"),
+              f"| L — IPA arm64 `iphoneos` | `PASS` | Run `{run_id}` gerou e validou o IPA unsigned; teste de execução em iPhone permanece separado e pendente. |",
+              "DEVICE-TEST-REPORT acceptance row",
+          )
           text += ("\n## Evidência do build deste artifact\n\n"
                    f"- GitHub Actions: {run_url}\n"
+                   f"- Artifact: `Winlator-iOS-Release-{run_id}`\n"
                    f"- IPA: `{ipa_name}`; SHA-256: `{digest}`.\n"
                    "- Validação em iPhone físico: `DEVICE_VALIDATION_PENDING` (`NOT_TESTED` por este workflow); não há instalação/execução no telefone.\n")
           device.write_text(text)
 
           matrix = Path(matrix_path)
           text = matrix.read_text()
-          old_build = "| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187`/`38505466371` falharam no compile; `38506076451`/`38506481869` compilaram/empacotaram, mas falharam na validação. Evidência em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |"
-          new_build = f"| Build iOS para `iphoneos` ARM64 | `PASS` neste run | Runner macOS; consulte {run_url} e o BUILD-REPORT. |"
-          old_ipa = "| IPA validado | `BUILD_FAILED` / `NOT_PUBLISHED` | Os runs `38506076451`/`38506481869` empacotaram IPA unsigned transitório, mas o validador falhou; nenhum release foi publicado. |"
-          new_ipa = f"| IPA validado | `PASS` neste run | `{ipa_name}`; SHA-256 `{digest}`; payload `iphoneos` ARM64 verificado. |"
-          if old_build not in text or old_ipa not in text:
-              raise SystemExit("COMPATIBILITY-MATRIX source text changed; refusing a partial report update")
-          text = text.replace(old_build, new_build, 1).replace(old_ipa, new_ipa, 1)
+          text = replace_one_line(
+              text,
+              lambda line: line.startswith("| Build iOS para `iphoneos` ARM64 |"),
+              f"| Build iOS para `iphoneos` ARM64 | `PASS` neste run | Runner macOS; consulte {run_url} e o BUILD-REPORT. |",
+              "COMPATIBILITY-MATRIX build row",
+          )
+          text = replace_one_line(
+              text,
+              lambda line: line.startswith("| IPA validado |"),
+              f"| IPA validado | `PASS` neste run | `{ipa_name}`; SHA-256 `{digest}`; payload `iphoneos` ARM64 verificado. |",
+              "COMPATIBILITY-MATRIX IPA row",
+          )
           text += ("\nBuild provenance: " + run_url + "\n"
                    "This build does not change the PE/Wine/Box64 or physical-device validation status.\n")
           matrix.write_text(text)
