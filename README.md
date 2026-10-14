@@ -7,7 +7,7 @@ Este repositório agora contém a árvore iOS de diagnóstico existente no port,
 - A PoC iOS `PHASE_02_RECONSTRUCTED_POC`: um harness C de capacidades Darwin/POSIX, uma ponte Objective-C/SwiftUI e testes para memória, threads, sinais, filesystem, IPC e um loader experimental.
 - No host Linux x86_64 desta execução: CMake compilou sem warnings/erros; CTest passou **4/4**; o programa de testes executou **298 checks, 0 falhas**; a suíte reportou 62 records (`58 PASS`, `0 FAIL`, `0 BLOCKED`, `2 UNSUPPORTED`, `0 UNTESTED`, `2 NOT_APPLICABLE`). São resultados apenas de host Linux.
 - Um pré-validador estrutural do projeto Xcode passou **62 checks**; o target está configurado para iOS 17.0 e o produto configurado é `WinlatorIOS.app` (`Winlator iOS Probe` na tela inicial). Isso não substitui `xcodebuild`.
-- Um workflow manual foi adicionado para repetir os testes e, num runner macOS, compilar/validar um IPA de `iphoneos` ARM64. O artifact produzido é, no máximo, a PoC diagnóstica descrita abaixo.
+- Um workflow manual (`workflow_dispatch`) e de validação para PRs foi adicionado para repetir os testes e, num runner macOS, compilar/validar um IPA de `iphoneos` ARM64. Pull requests não recebem secrets de assinatura. O artifact produzido é, no máximo, a PoC diagnóstica descrita abaixo.
 
 ## O que não existe
 

@@ -36,7 +36,7 @@ O relatório de teste host está preservado em `ios/Documentation/evidence/host_
 
 ## Workflow GitHub Actions
 
-Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch`. O job Linux compila e testa o harness; o job `macos-26` tenta construir/validar um IPA `iphoneos` arm64. Assinatura de desenvolvimento/ad-hoc é tentada somente com conjunto completo de secrets; sem ele, a rota gera um IPA rotulado explicitamente como unsigned. A execução deste workflow, o nome/estado do artifact e o SHA-256 **ainda não estão comprovados** por este relatório.
+Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch` e automático em PRs para `main` que alterem a árvore iOS/relatórios. O job Linux compila e testa o harness; o job `macos-26` tenta construir/validar um IPA `iphoneos` arm64. Pull requests sempre ignoram secrets de assinatura; apenas o disparo manual pode usar o conjunto completo de secrets para assinatura development/ad-hoc. Sem secrets no disparo manual, a rota gera um IPA rotulado explicitamente como unsigned. A execução deste workflow, o nome/estado do artifact e o SHA-256 **ainda não estão comprovados** por este relatório.
 
 ### Histórico do workflow da fonte importada (não é build deste checkout)
 

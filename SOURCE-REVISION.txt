@@ -59,4 +59,5 @@ LOCAL PACKAGING CHANGES
   the Xcode target and scheme remain WinlatorPhase02. The imported project's deployment target
   was raised from 16.0 to the requested iOS 17.0. The home-screen label is “Winlator iOS Probe”
   to identify this honestly as a diagnostic proof of concept, not a Windows runtime. The manual
-  GitHub Actions workflow and release reports were added in the target repository.
+  GitHub Actions workflow and release reports were added in the target repository; PRs to main
+  run the unsigned build without signing secrets, while workflow_dispatch may use configured secrets.

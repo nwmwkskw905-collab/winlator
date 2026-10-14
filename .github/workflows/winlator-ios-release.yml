@@ -2,6 +2,21 @@ name: Winlator iOS Build
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/winlator-ios-release.yml'
+      - 'ios/**'
+      - 'BUILD-REPORT.md'
+      - 'RUNTIME-REPORT.md'
+      - 'DEVICE-TEST-REPORT.md'
+      - 'COMPATIBILITY-MATRIX.md'
+      - 'INSTALL-WINDOWS.md'
+      - 'THIRD-PARTY-NOTICES.md'
+      - 'SOURCE-REVISION.txt'
+      - 'LICENSE'
+      - 'README.md'
 
 permissions:
   contents: read
@@ -147,12 +162,12 @@ jobs:
         id: signing
         shell: bash
         env:
-          IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
-          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
-          IOS_SIGNING_IDENTITY: ${{ secrets.IOS_SIGNING_IDENTITY }}
-          IOS_EXPORT_METHOD: ${{ secrets.IOS_EXPORT_METHOD }}
+          IOS_CERTIFICATE_P12_BASE64: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_CERTIFICATE_P12_BASE64 || '' }}
+          IOS_CERTIFICATE_PASSWORD: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_CERTIFICATE_PASSWORD || '' }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_PROVISIONING_PROFILE_BASE64 || '' }}
+          IOS_TEAM_ID: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_TEAM_ID || '' }}
+          IOS_SIGNING_IDENTITY: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_SIGNING_IDENTITY || '' }}
+          IOS_EXPORT_METHOD: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_EXPORT_METHOD || '' }}
         run: |
           set -euo pipefail
           if [[ -n "$IOS_CERTIFICATE_P12_BASE64" && \
@@ -175,12 +190,12 @@ jobs:
         if: steps.signing.outputs.enabled == 'true'
         shell: bash
         env:
-          IOS_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_CERTIFICATE_P12_BASE64 }}
-          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
-          IOS_SIGNING_IDENTITY: ${{ secrets.IOS_SIGNING_IDENTITY }}
-          IOS_EXPORT_METHOD: ${{ secrets.IOS_EXPORT_METHOD }}
+          IOS_CERTIFICATE_P12_BASE64: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_CERTIFICATE_P12_BASE64 || '' }}
+          IOS_CERTIFICATE_PASSWORD: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_CERTIFICATE_PASSWORD || '' }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_PROVISIONING_PROFILE_BASE64 || '' }}
+          IOS_TEAM_ID: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_TEAM_ID || '' }}
+          IOS_SIGNING_IDENTITY: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_SIGNING_IDENTITY || '' }}
+          IOS_EXPORT_METHOD: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_EXPORT_METHOD || '' }}
         run: |
           set -euo pipefail
           set +x
@@ -269,7 +284,7 @@ jobs:
         if: steps.signing.outputs.enabled == 'true'
         shell: bash
         env:
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_TEAM_ID: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_TEAM_ID || '' }}
         run: |
           set -euo pipefail
           xcodebuild \
@@ -291,7 +306,7 @@ jobs:
         if: steps.signing.outputs.enabled == 'true'
         shell: bash
         env:
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_TEAM_ID: ${{ github.event_name == 'workflow_dispatch' && secrets.IOS_TEAM_ID || '' }}
         run: |
           set -euo pipefail
           EXPORT_OPTIONS="$RUNNER_TEMP/WinlatorExportOptions.plist"
