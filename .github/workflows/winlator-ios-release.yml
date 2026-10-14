@@ -544,6 +544,34 @@ jobs:
           security delete-keychain "$WORK/signing.keychain-db" >/dev/null 2>&1
           rm -rf "$WORK"
 
+      - name: Surface Apple toolchain diagnostics if a prior build step failed
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          for LOG in \
+            "$EVIDENCE_DIR/ci_ios_xcodebuild_unsigned.log" \
+            "$EVIDENCE_DIR/ci_ios_xcodebuild_signed.log" \
+            "$EVIDENCE_DIR/ci_ios_export_signed.log" \
+            "$EVIDENCE_DIR/ci_ios_package_validation.log"; do
+            [[ -s "$LOG" ]] || continue
+            echo "XCODE_FAILURE_LOG=$LOG"
+            python3 - "$LOG" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          lines = Path(sys.argv[1]).read_text(errors="replace").splitlines()
+          selected = [line for line in lines if re.search(r"\b(error|fatal error|BUILD FAILED|Error:)\b", line, re.I)]
+          if not selected:
+              selected = lines[-12:]
+          for line in selected[-12:]:
+              line = " ".join(line.split())[:1800]
+              line = line.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print(f"::error title=Apple build diagnostic::{line}")
+          PY
+          done
+
       - name: Upload diagnostic logs if a prior build step failed
         if: failure()
         uses: actions/upload-artifact@v4
