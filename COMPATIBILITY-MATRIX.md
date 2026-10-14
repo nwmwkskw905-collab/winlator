@@ -6,8 +6,8 @@ Estados abaixo descrevem apenas o que há evidência neste checkout; a suíte ho
 |---|---|---|
 | Harness C em Linux x86_64 | `PASS` | 4/4 CTest; 298 checks; 62 records. |
 | Harness C em Darwin/macOS | `NOT_TESTED` nesta sessão | O workflow do port original falhou no teste macOS em um run recente. |
-| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187` e `38505466371` falharam no compile; detalhes em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |
-| IPA validado | `BUILD_FAILED` / `NOT_CREATED` | Os dois builds de dispositivo falharam antes de empacotar um IPA. |
+| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187`/`38505466371` falharam no compile; `38506076451` construiu/empacotou mas falhou na validação do IPA. Evidência em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |
+| IPA validado | `BUILD_FAILED` / `NOT_PUBLISHED` | O run `38506076451` empacotou IPA unsigned transitório, mas o validador falhou; nenhum release foi publicado. |
 | iPhone 13 físico | `DEVICE_VALIDATION_PENDING` | Nenhum dispositivo conectado; requer validação manual em dispositivo real. |
 | Containers e prefixos Wine | `NOT_TESTED` | Não implementados. |
 | PE32 (x86) | `NOT_TESTED` | Não há parser ou execução PE. |

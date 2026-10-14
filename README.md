@@ -17,7 +17,7 @@ Por isso, não importe executáveis esperando executá-los. Um eventual IPA dest
 
 ## Construção e evidências
 
-As duas primeiras tentativas Apple (`38505249187` e `38505466371`) terminaram `BUILD_FAILED` antes de gerar IPA; a causa (uso do header iOS-incompatível `mach/mach_vm.h`) foi corrigida para `vm_region_64` e aguarda novo CI. Não há IPA ou SHA-256 dessas tentativas.
+As três tentativas Apple falharam no pipeline. Após corrigir o uso do header iOS-incompatível `mach/mach_vm.h` para `vm_region_64`, o run `38506076451` compilou e empacotou um IPA unsigned transitório, mas falhou na validação antes de publicar o artifact; não há IPA de release ou SHA-256. O próximo run inclui captura de diagnóstico completa dessa validação.
 
 - [BUILD-REPORT.md](BUILD-REPORT.md) — testes executados aqui e estado de compilação Apple.
 - [RUNTIME-REPORT.md](RUNTIME-REPORT.md) — componentes presentes/ausentes.

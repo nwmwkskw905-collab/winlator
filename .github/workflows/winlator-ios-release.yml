@@ -374,6 +374,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          exec > >(tee "$EVIDENCE_DIR/ci_ios_package_validation.log") 2>&1
           if [[ '${{ steps.signing.outputs.enabled }}' == 'true' ]]; then
             IPA="$GITHUB_WORKSPACE/Winlator-iOS-Release/Winlator-iOS-signed.ipa"
           else
@@ -457,9 +458,9 @@ jobs:
           run_url = f"https://github.com/{repository}/actions/runs/{run_id}"
           device = Path(device_path)
           text = device.read_text()
-          old_bullet = "- `BUILD_FAILED` — os runs GitHub Actions `38505249187` e `38505466371` falharam no compile `iphoneos` (`xcodebuild` exit 65); nenhum IPA foi produzido. Ver `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`."
+          old_bullet = "- `BUILD_FAILED` — runs `38505249187`/`38505466371` falharam no compile; `38506076451` compilou e empacotou IPA unsigned transitório, mas falhou na validação, sem publicar release. Ver `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`."
           new_bullet = "- `PASS` — build/export IPA `iphoneos` arm64 e validações de pacote concluídos pelo runner macOS deste run."
-          old_row = "| L — IPA arm64 `iphoneos` | `BUILD_FAILED` | Dois runs macOS falharam em `xcodebuild` antes do IPA; a correção está pendente de nova execução. |"
+          old_row = "| L — IPA arm64 `iphoneos` | `BUILD_FAILED` | O terceiro run empacotou IPA transitório, mas a validação falhou antes do upload; nova execução necessária. |"
           new_row = "| L — IPA arm64 `iphoneos` | `PASS` no runner macOS | IPA, arquitetura, plataforma iPhoneOS e payload validados neste run; isso não é teste em dispositivo. |"
           if old_bullet not in text or old_row not in text:
               raise SystemExit("DEVICE-TEST-REPORT source text changed; refusing a partial report update")
@@ -472,9 +473,9 @@ jobs:
 
           matrix = Path(matrix_path)
           text = matrix.read_text()
-          old_build = "| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187` e `38505466371` falharam no compile; detalhes em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |"
+          old_build = "| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187`/`38505466371` falharam no compile; `38506076451` construiu/empacotou mas falhou na validação do IPA. Evidência em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |"
           new_build = f"| Build iOS para `iphoneos` ARM64 | `PASS` neste run | Runner macOS; consulte {run_url} e o BUILD-REPORT. |"
-          old_ipa = "| IPA validado | `BUILD_FAILED` / `NOT_CREATED` | Os dois builds de dispositivo falharam antes de empacotar um IPA. |"
+          old_ipa = "| IPA validado | `BUILD_FAILED` / `NOT_PUBLISHED` | O run `38506076451` empacotou IPA unsigned transitório, mas o validador falhou; nenhum release foi publicado. |"
           new_ipa = f"| IPA validado | `PASS` neste run | `{ipa_name}`; SHA-256 `{digest}`; payload `iphoneos` ARM64 verificado. |"
           if old_build not in text or old_ipa not in text:
               raise SystemExit("COMPATIBILITY-MATRIX source text changed; refusing a partial report update")
@@ -550,10 +551,10 @@ jobs:
         run: |
           set +e
           for LOG in \
+            "$EVIDENCE_DIR/ci_ios_package_validation.log" \
             "$EVIDENCE_DIR/ci_ios_xcodebuild_unsigned.log" \
             "$EVIDENCE_DIR/ci_ios_xcodebuild_signed.log" \
-            "$EVIDENCE_DIR/ci_ios_export_signed.log" \
-            "$EVIDENCE_DIR/ci_ios_package_validation.log"; do
+            "$EVIDENCE_DIR/ci_ios_export_signed.log"; do
             [[ -s "$LOG" ]] || continue
             echo "XCODE_FAILURE_LOG=$LOG"
             python3 - "$LOG" <<'PY'
@@ -562,7 +563,7 @@ jobs:
           from pathlib import Path
 
           lines = Path(sys.argv[1]).read_text(errors="replace").splitlines()
-          selected = [line for line in lines if re.search(r"\b(error|fatal error|BUILD FAILED|Error:)\b", line, re.I)]
+          selected = [line for line in lines if re.search(r"\b(error|fatal error|BUILD FAILED)\b|FAIL:|does not exist|not found|unexpected", line, re.I)]
           if not selected:
               selected = lines[-12:]
           for line in selected[-12:]:

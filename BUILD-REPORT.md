@@ -3,7 +3,7 @@
 **Data da execução local:** 2026-10-14 UTC
 **Status do runtime:** `RUNTIME_INCOMPLETE`
 **Validação física:** `DEVICE_VALIDATION_PENDING` — nenhum iPhone foi conectado/testado nesta sessão.
-**Build/IPA CI atual:** `BUILD_FAILED` — duas tentativas macOS falharam na compilação; nenhum IPA foi produzido.
+**Build/IPA CI atual:** `BUILD_FAILED` — três runs falharam no pipeline macOS; um IPA transitório foi empacotado, mas não validado nem publicado.
 **IPA nesta execução local:** `NOT_TESTED` — nenhum IPA foi produzido neste host Linux.
 
 ## Revisão e ferramentas
@@ -29,7 +29,7 @@
 | Auditorias de APIs/headers Apple, interfaces, composição, capacidade/JIT/SHM, Fix 06 e estabilização | `PASS` | Auditorias estáticas, sem SDK Apple. |
 | Auditoria de configuração de entitlements | `PASS` | 7 regras estáticas; nenhum certificado/perfil/entitlement foi concedido ou testado. |
 | Sintaxe do workflow e relatórios dinâmicos | `PASS` | Parse YAML, `bash -n`, compilação dos blocos Python e teste de atualização em cópias temporárias; não é execução do workflow. |
-| Build `iphoneos` ARM64 / `.app` / IPA | `BUILD_FAILED` | Runs GitHub Actions `38505249187` e `38505466371` falharam no `xcodebuild` (exit 65); causa e correção proposta em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |
+| Build `iphoneos` ARM64 / `.app` / IPA | `BUILD_FAILED` | Runs `38505249187` e `38505466371` falharam na compilação; `38506076451` compilou/empacotou, mas falhou na validação do IPA. Evidência em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |
 | Assinatura | `NOT_TESTED` | Nenhum certificado/perfil foi fornecido nesta execução. |
 | Instalação/execução no iPhone 13 | `NOT_TESTED` | Nenhum dispositivo conectado a esta sessão. |
 
@@ -37,7 +37,7 @@ O relatório de teste host está preservado em `ios/Documentation/evidence/host_
 
 ## Workflow GitHub Actions
 
-Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch` e automático em PRs para `main` que alterem a árvore iOS/relatórios. O job Linux passou; os dois runs macOS observados falharam na compilação C de `runtime_memory.c`, antes de produzir o `.app`/IPA. O motivo, visível nas anotações do check, foi o include iOS-incompatível `<mach/mach_vm.h>` e a chamada `mach_vm_region`; a árvore agora usa `vm_region_64`, mas essa correção ainda precisa ser compilada por um novo run. Pull requests ignoram secrets de assinatura; apenas o disparo manual pode usar o conjunto completo de secrets para assinatura development/ad-hoc. Nenhum IPA ou SHA-256 foi produzido nestes runs.
+Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch` e automático em PRs para `main` que alterem a árvore iOS/relatórios. Os jobs Linux passaram. Nos runs `38505249187` e `38505466371`, o compile falhou pelo header iOS-incompatível `<mach/mach_vm.h>`/`mach_vm_region`; essa chamada foi substituída por `vm_region_64`. No run `38506076451`, o build e o empacotamento unsigned passaram, mas a validação do IPA falhou; nenhum release IPA ou SHA-256 foi publicado. O workflow agora captura o log completo da validação e publica as linhas de falha como anotações para o próximo run. Pull requests ignoram secrets de assinatura; apenas o disparo manual pode usar o conjunto completo de secrets para assinatura development/ad-hoc.
 
 ### Histórico do workflow da fonte importada (não é build deste checkout)
 
@@ -49,11 +49,11 @@ A execução mais recente consultada no repositório de origem, commit `a3754626
 |---|---|
 | Xcode / SDK | `NOT_TESTED` — indisponíveis localmente |
 | Arquitetura do host | `x86_64 Linux` |
-| Arquitetura `iphoneos` | `NOT_TESTED` |
-| Compilação iOS / criação do IPA | `BUILD_FAILED` nos dois runs macOS observados |
-| Dependências runtime incorporadas | Nenhum Wine/Box64/runtime Windows integrado; o build do target iOS falhou antes de gerar o `.app`. |
+| Arquitetura `iphoneos` | `NOT_VERIFIED` — alvo compilado com `ARCHS=arm64`, mas a validação falhou antes de disponibilizar um binário de release. |
+| Compilação iOS / criação do IPA | `BUILD_FAILED` nos três runs macOS observados |
+| Dependências runtime incorporadas | Nenhum Wine/Box64/runtime Windows integrado; o `.app` transitório é somente a PoC diagnóstica. |
 | Assinatura / entitlements incorporados | `NOT_TESTED` |
-| SHA-256 do IPA | `NOT_GENERATED` — os builds CI falharam antes do packaging. |
-| Artifact/link de IPA desta revisão | `NOT_CREATED` — não houve IPA para upload; somente evidência de falha. |
+| SHA-256 do IPA | `NOT_GENERATED` — a validação falhou antes da etapa que calcula o hash de release. |
+| Artifact/link de IPA desta revisão | `NOT_CREATED` — o IPA transitório do run `38506076451` não passou validação e não foi publicado; somente evidência de falha foi enviada. |
 
-**`BUILD_FAILED` foi observado nos dois runs macOS listados acima; nenhum IPA/SHA-256 foi produzido.** A correção de header/API está pendente de novo build; mesmo que o workflow gere um IPA, o produto continua `RUNTIME_INCOMPLETE` até existir e ser testado um runtime Windows real.
+**`BUILD_FAILED` foi observado nos três runs listados acima.** O run `38506076451` gerou um IPA unsigned transitório, mas a validação falhou e ele não foi publicado; não há SHA-256 de release. A captura de diagnóstico foi ampliada e exige novo run. Mesmo que um IPA validado seja publicado, o produto continua `RUNTIME_INCOMPLETE` até existir e ser testado um runtime Windows real.

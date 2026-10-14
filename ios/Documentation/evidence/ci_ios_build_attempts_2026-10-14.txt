@@ -25,12 +25,27 @@ RUN 38505466371
   `<mach/mach_vm.h>` header was therefore not valid for the iPhoneOS target, despite being
   guarded by `__APPLE__`; the static include audit had not previously known this limitation.
 
-CORRECTION APPLIED AFTER THESE RUNS
+RUN 38506076451
+  commit: 298c0e10689ae7888c17f9954b826f9e5419e23d
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38506076451
+  Linux host job: PASS. The Apple static audits and `xcodebuild -list` also passed.
+  The replacement `vm_region_64` call compiled; the unsigned build and IPA packaging steps
+  reported success. The following package-validation step failed (exit 1), so the release upload
+  was skipped. The check-run annotation exposed only the final Xcode build-log lines (including
+  a non-fatal orientation warning), not the validator's failing assertion. The runner artifact
+  and raw logs could not be downloaded in this sandbox (GitHub result storage returned EOF).
+  A transient IPA was packaged on the runner, but no validated/release IPA artifact or SHA-256
+  was published. The precise validator failure is not known from available evidence.
+
+CORRECTION / DIAGNOSTICS APPLIED AFTER THESE RUNS
   The Apple memory-observation implementation now uses `vm_region_64` and types declared by
-  `<mach/mach.h>`, and the Apple-header audit now rejects `<mach/mach_vm.h>` on iPhoneOS. These
-  changes are not validated by an Apple compiler yet; the next CI run is required.
+  `<mach/mach.h>`, and the Apple-header audit now rejects `<mach/mach_vm.h>` on iPhoneOS.
+  The IPA validation step now captures its complete console output to an evidence log, and the
+  failure reporter emits validator failures as GitHub check annotations. These changes are not
+  validated by a subsequent Apple run yet.
 
 RESULT AT TIME OF WRITING
-  BUILD_FAILED for both attempts; no `.app`, IPA, signature, SHA-256, or downloadable release
-  artifact was produced. No physical iPhone test occurred; DEVICE_VALIDATION_PENDING. The
-  Windows runtime remains RUNTIME_INCOMPLETE.
+  BUILD_FAILED: no validated IPA or release artifact is available. Run 38506076451 did create
+  a transient unsigned IPA before its package validator failed, but did not upload it. No IPA
+  SHA-256 is therefore claimed. No physical iPhone test occurred (DEVICE_VALIDATION_PENDING);
+  the Windows runtime remains RUNTIME_INCOMPLETE.
