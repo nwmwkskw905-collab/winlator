@@ -381,24 +381,40 @@ jobs:
             IPA="$GITHUB_WORKSPACE/Winlator-iOS-Release/Winlator-iOS-unsigned.ipa"
           fi
           [[ -s "$IPA" ]] || { echo 'FAIL: IPA missing or empty'; exit 1; }
-          INSPECT="$RUNNER_TEMP/winlator-ipa-inspect"
+          echo "Checking IPA ZIP integrity..."
+          unzip -t "$IPA" | tee "$EVIDENCE_DIR/ci_ios_zip_integrity.txt"
+          INSPECT="${RUNNER_TEMP}/winlator-ipa-inspect"
           rm -rf "$INSPECT" && mkdir -p "$INSPECT"
           ditto -x -k "$IPA" "$INSPECT"
-          APP="$INSPECT/Payload/WinlatorIOS.app"
+          APP="${RUNNER_TEMP}/winlator-ipa-inspect/Payload/WinlatorIOS.app"
           [[ -d "$APP" ]] || { echo 'FAIL: Payload/WinlatorIOS.app missing'; exit 1; }
           [[ -f "$APP/Info.plist" ]] || { echo 'FAIL: app Info.plist missing'; exit 1; }
-          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")
+          PLIST_EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")
+          [[ "$PLIST_EXECUTABLE" == 'WinlatorIOS' ]] || {
+            echo "FAIL: expected CFBundleExecutable WinlatorIOS, got $PLIST_EXECUTABLE"
+            exit 1
+          }
+          EXECUTABLE="${APP}/WinlatorIOS"
           BUNDLE_ID=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")
-          [[ -f "$APP/$EXECUTABLE" ]] || { echo 'FAIL: app executable missing'; exit 1; }
           [[ "$BUNDLE_ID" == "$IOS_BUNDLE_ID" ]] || { echo "FAIL: unexpected bundle ID $BUNDLE_ID"; exit 1; }
-          lipo -verify_arch arm64 "$APP/$EXECUTABLE"
-          file "$APP/$EXECUTABLE" | tee "$EVIDENCE_DIR/ci_ios_executable_file.txt"
-          xcrun vtool -show-build "$APP/$EXECUTABLE" \
+          test -f "$EXECUTABLE" || {
+            echo "ERRO: Executável iOS não encontrado."
+            exit 1
+          }
+          echo "Verificando formato do executável..."
+          file "$EXECUTABLE" | tee "$EVIDENCE_DIR/ci_ios_executable_file.txt"
+          echo "Verificando arquitetura ARM64..."
+          xcrun lipo "$EXECUTABLE" -verify_arch arm64
+          echo "Arquiteturas presentes:"
+          xcrun lipo -archs "$EXECUTABLE" | tee "$EVIDENCE_DIR/ci_ios_architectures.txt"
+          echo "Verificando plataforma Mach-O..."
+          xcrun vtool -show-build "$EXECUTABLE" \
             2>&1 | tee "$EVIDENCE_DIR/ci_ios_load_commands.txt"
           grep -q 'platform IOS' "$EVIDENCE_DIR/ci_ios_load_commands.txt" || {
             echo 'FAIL: executable is not an iPhoneOS Mach-O (simulator is not accepted)'
             exit 1
           }
+          echo "Validação da arquitetura ARM64 concluída."
           MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP/Info.plist")
           [[ "$MINIMUM_OS" == '17.0' ]] || { echo "FAIL: unexpected minimum iOS version $MINIMUM_OS"; exit 1; }
           echo "MINIMUM_OS=$MINIMUM_OS"
@@ -427,7 +443,7 @@ jobs:
             echo "architecture=arm64"
             echo "platform=iphoneos (LC_BUILD_VERSION platform IOS)"
             echo "dependencies:"
-            otool -L "$APP/$EXECUTABLE"
+            otool -L "$EXECUTABLE"
           } | tee "$EVIDENCE_DIR/ci_ios_package_validation.txt"
           echo "ipa=$IPA" >> "$GITHUB_OUTPUT"
 
@@ -449,6 +465,7 @@ jobs:
           IPA_NAME=$(basename "$IOS_IPA")
           HASH=$(shasum -a 256 "$IOS_IPA" | awk '{print $1}')
           printf '%s  %s\n' "$HASH" "$IPA_NAME" > "$RELEASE/SHA256SUMS.txt"
+          echo "::notice title=IPA SHA-256::${HASH}  ${IPA_NAME}"
           python3 - "$RELEASE/DEVICE-TEST-REPORT.md" "$RELEASE/COMPATIBILITY-MATRIX.md" \
             "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY" "$HASH" "$IPA_NAME" <<'PY'
           from pathlib import Path
@@ -458,9 +475,9 @@ jobs:
           run_url = f"https://github.com/{repository}/actions/runs/{run_id}"
           device = Path(device_path)
           text = device.read_text()
-          old_bullet = "- `BUILD_FAILED` — runs `38505249187`/`38505466371` falharam no compile; `38506076451` compilou e empacotou IPA unsigned transitório, mas falhou na validação, sem publicar release. Ver `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`."
+          old_bullet = "- `BUILD_FAILED` — runs `38505249187`/`38505466371` falharam no compile; `38506076451`/`38506481869` compilaram e empacotaram IPA unsigned transitório, mas falharam na validação, sem publicar release. Ver `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`."
           new_bullet = "- `PASS` — build/export IPA `iphoneos` arm64 e validações de pacote concluídos pelo runner macOS deste run."
-          old_row = "| L — IPA arm64 `iphoneos` | `BUILD_FAILED` | O terceiro run empacotou IPA transitório, mas a validação falhou antes do upload; nova execução necessária. |"
+          old_row = "| L — IPA arm64 `iphoneos` | `BUILD_FAILED` | Os dois runs mais recentes empacotaram IPA transitório, mas a validação falhou antes do upload; nova execução necessária. |"
           new_row = "| L — IPA arm64 `iphoneos` | `PASS` no runner macOS | IPA, arquitetura, plataforma iPhoneOS e payload validados neste run; isso não é teste em dispositivo. |"
           if old_bullet not in text or old_row not in text:
               raise SystemExit("DEVICE-TEST-REPORT source text changed; refusing a partial report update")
@@ -473,9 +490,9 @@ jobs:
 
           matrix = Path(matrix_path)
           text = matrix.read_text()
-          old_build = "| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187`/`38505466371` falharam no compile; `38506076451` construiu/empacotou mas falhou na validação do IPA. Evidência em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |"
+          old_build = "| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187`/`38505466371` falharam no compile; `38506076451`/`38506481869` compilaram/empacotaram, mas falharam na validação. Evidência em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |"
           new_build = f"| Build iOS para `iphoneos` ARM64 | `PASS` neste run | Runner macOS; consulte {run_url} e o BUILD-REPORT. |"
-          old_ipa = "| IPA validado | `BUILD_FAILED` / `NOT_PUBLISHED` | O run `38506076451` empacotou IPA unsigned transitório, mas o validador falhou; nenhum release foi publicado. |"
+          old_ipa = "| IPA validado | `BUILD_FAILED` / `NOT_PUBLISHED` | Os runs `38506076451`/`38506481869` empacotaram IPA unsigned transitório, mas o validador falhou; nenhum release foi publicado. |"
           new_ipa = f"| IPA validado | `PASS` neste run | `{ipa_name}`; SHA-256 `{digest}`; payload `iphoneos` ARM64 verificado. |"
           if old_build not in text or old_ipa not in text:
               raise SystemExit("COMPATIBILITY-MATRIX source text changed; refusing a partial report update")

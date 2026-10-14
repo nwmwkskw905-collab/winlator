@@ -1,6 +1,6 @@
 GitHub Actions iPhoneOS build attempts — 2026-10-14 UTC
 
-Scope: this file records two failed CI attempts for this branch. Neither produced an IPA.
+Scope: this file records the first four failed CI attempts for this branch. No release IPA passed validation or was published.
 
 RUN 38505249187
   commit: eed63e5098edc4ff478c237c7b145865270656f5
@@ -37,15 +37,28 @@ RUN 38506076451
   A transient IPA was packaged on the runner, but no validated/release IPA artifact or SHA-256
   was published. The precise validator failure is not known from available evidence.
 
+RUN 38506481869
+  commit: e471edc30c81df70fcc17b65c9d14bc5cc3c16ac
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38506481869
+  Linux host job: PASS. Apple static audits and the Xcode parser gate passed.
+  The unsigned iPhoneOS build and IPA packaging passed; validation failed at the architecture
+  check. The newly added validation-log annotation exposed the exact error:
+    lipo: unknown architecture specification flag:
+      /Users/runner/work/_temp/winlator-ipa-inspect/Payload/WinlatorIOS.app/WinlatorIOS
+      in specifying -verify_arch operation
+  Cause: Apple's `lipo` expects the input binary before `-verify_arch`; placing it after the
+  variadic architecture argument made `lipo` interpret the path as another architecture.
+  The workflow command now follows the requested order: `xcrun lipo "$EXECUTABLE" -verify_arch arm64`, followed by `xcrun lipo -archs "$EXECUTABLE"`. It also explicitly tests ZIP integrity and retains the other IPA checks; a new run is required.
+
 CORRECTION / DIAGNOSTICS APPLIED AFTER THESE RUNS
   The Apple memory-observation implementation now uses `vm_region_64` and types declared by
   `<mach/mach.h>`, and the Apple-header audit now rejects `<mach/mach_vm.h>` on iPhoneOS.
-  The IPA validation step now captures its complete console output to an evidence log, and the
-  failure reporter emits validator failures as GitHub check annotations. These changes are not
-  validated by a subsequent Apple run yet.
+  The IPA validation step captures its complete console output to an evidence log; the failure
+  reporter emits validator failures as GitHub check annotations. The `lipo` argument order was
+  corrected after run 38506481869. That correction is not validated by a subsequent Apple run yet.
 
 RESULT AT TIME OF WRITING
-  BUILD_FAILED: no validated IPA or release artifact is available. Run 38506076451 did create
-  a transient unsigned IPA before its package validator failed, but did not upload it. No IPA
-  SHA-256 is therefore claimed. No physical iPhone test occurred (DEVICE_VALIDATION_PENDING);
-  the Windows runtime remains RUNTIME_INCOMPLETE.
+  BUILD_FAILED: no validated IPA or release artifact is available. Runs 38506076451 and
+  38506481869 each created a transient unsigned IPA before package validation failed, but neither
+  uploaded a release. No IPA SHA-256 is therefore claimed. No physical iPhone test occurred
+  (DEVICE_VALIDATION_PENDING); the Windows runtime remains RUNTIME_INCOMPLETE.
