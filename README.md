@@ -17,7 +17,7 @@ Por isso, não importe executáveis esperando executá-los. O IPA já produzido 
 
 ## Construção e evidências
 
-As quatro primeiras tentativas Apple falharam, mas a correção foi validada em [run 38516877338](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38516877338), que compilou e validou o IPA unsigned. Artifact: [Winlator-iOS-Release-38516877338 (ZIP)](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip), com `Winlator-iOS-unsigned.ipa`; SHA-256 `66c0b3bcf686fa374bd247eaac94af4063618e2bf25ad14eb5dfecf4e94482cd`. A validação do artefato não é teste em iPhone; `DEVICE_VALIDATION_PENDING` e `RUNTIME_INCOMPLETE` permanecem.
+As quatro primeiras tentativas Apple falharam; a correção passou no run `38516877338` e foi repetida com sucesso em [run 38517367865](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38517367865), que é a evidência mais recente de build e validação do IPA unsigned. Artifact: [Winlator-iOS-Release-38517367865 (ZIP)](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip), com `Winlator-iOS-unsigned.ipa`; SHA-256 `6e067b4394d4eb6a2be27771e9f2162e4cf000b7d7f10dec5b41600f2d26b248`. A validação do artefato não é teste em iPhone; `DEVICE_VALIDATION_PENDING` e `RUNTIME_INCOMPLETE` permanecem.
 
 - [BUILD-REPORT.md](BUILD-REPORT.md) — testes locais, resultado do build/IPA Apple e hash do artifact validado.
 - [RUNTIME-REPORT.md](RUNTIME-REPORT.md) — componentes presentes/ausentes.

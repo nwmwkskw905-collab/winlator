@@ -77,3 +77,16 @@ FOLLOW-UP SUCCESS — RUN 38516877338 (2026-10-14 UTC)
   IPA SHA-256: 66c0b3bcf686fa374bd247eaac94af4063618e2bf25ad14eb5dfecf4e94482cd
   This is CI build/package evidence only. No physical iPhone installation or Windows EXE runtime
   test occurred; DEVICE_VALIDATION_PENDING and RUNTIME_INCOMPLETE remain unchanged.
+
+
+FOLLOW-UP REPEAT — RUN 38517367865 (2026-10-14 UTC)
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38517367865
+  Commit: 1305c69fe3f931c81af92703a3a6fb277bfc8d69
+  Linux host tests: PASS. macOS/iPhoneOS build and IPA validation: PASS (second successful run).
+  The Xcode parser/audits, unsigned ARM64 build, IPA packaging, and complete package validator
+  all passed. Signing steps were skipped because this PR run had no signing secrets.
+  Published artifact: Winlator-iOS-Release-38517367865, containing Winlator-iOS-unsigned.ipa.
+  Artifact ZIP: https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip
+  IPA SHA-256: 6e067b4394d4eb6a2be27771e9f2162e4cf000b7d7f10dec5b41600f2d26b248
+  This is build/package evidence only. No physical iPhone install or Windows EXE runtime test
+  occurred; DEVICE_VALIDATION_PENDING and RUNTIME_INCOMPLETE remain unchanged.

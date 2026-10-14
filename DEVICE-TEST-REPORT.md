@@ -8,7 +8,7 @@
 
 - `PASS` — CMake/harness, CTest e 298 checks em host Linux x86_64.
 - `PASS` — 62 verificações estáticas da estrutura Xcode.
-- `PASS` — [run CI 38516877338](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38516877338) compilou e validou um IPA unsigned para iPhoneOS ARM64; ZIP, estrutura `Payload`, plataforma, arquitetura, estado unsigned e dependências passaram. Artifact: [Winlator-iOS-Release-38516877338](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip). Isso não é teste de instalação/execução em dispositivo.
+- `PASS` — [run CI 38517367865](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38517367865) compilou e validou um IPA unsigned para iPhoneOS ARM64; ZIP, estrutura `Payload`, plataforma, arquitetura, estado unsigned e dependências passaram. Artifact: [Winlator-iOS-Release-38517367865](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip). Isso não é teste de instalação/execução em dispositivo.
 - `NOT_TESTED` — instalação ou execução em simulador.
 - `NOT_TESTED` — instalação ou execução em iPhone físico nesta execução.
 - `NOT_TESTED` — importar/inspecionar um `.exe`, executar PE x64, mostrar uma janela Windows, aceitar entrada ou produzir áudio Windows.
@@ -34,7 +34,7 @@ Também foi consultado o GitHub Actions do port original. No commit `a37546267e3
 | I — áudio de programa Windows | `NOT_TESTED` | Nenhuma bridge de áudio Wine. |
 | J — encerrar/reabrir sessão Windows | `NOT_TESTED` | Não há sessão Windows para abrir. |
 | K — memória/estabilidade no iPhone | `NOT_TESTED` | Somente checks POSIX executados em Linux x86_64. |
-| L — IPA arm64 `iphoneos` | `PASS` | Run `38516877338` gerou e validou o IPA unsigned; teste de execução em iPhone permanece separado e pendente. |
+| L — IPA arm64 `iphoneos` | `PASS` | Run `38517367865` gerou e validou o IPA unsigned; teste de execução em iPhone permanece separado e pendente. |
 | M — instalação e uso em iPhone 13 | `NOT_TESTED` | Não existe dispositivo físico ligado ao agente. |
 
 **Status final de runtime:** `RUNTIME_INCOMPLETE`.

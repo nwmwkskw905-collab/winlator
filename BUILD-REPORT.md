@@ -3,7 +3,7 @@
 **Data da execução local:** 2026-10-14 UTC
 **Status do runtime:** `RUNTIME_INCOMPLETE`
 **Validação física:** `DEVICE_VALIDATION_PENDING` — nenhum iPhone foi conectado/testado nesta sessão.
-**Build/IPA CI confirmado:** `PASS` — [run 38516877338](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38516877338) compilou `iphoneos` ARM64 e validou o IPA unsigned. Artefato `Winlator-iOS-Release-38516877338`; SHA-256 `66c0b3bcf686fa374bd247eaac94af4063618e2bf25ad14eb5dfecf4e94482cd` ([download ZIP](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip)).
+**Build/IPA CI confirmado:** `PASS` — [run 38517367865](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38517367865) compilou `iphoneos` ARM64 e validou o IPA unsigned. Artefato `Winlator-iOS-Release-38517367865`; SHA-256 `6e067b4394d4eb6a2be27771e9f2162e4cf000b7d7f10dec5b41600f2d26b248` ([download ZIP](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip)).
 **IPA nesta execução local:** `NOT_TESTED` — nenhum IPA foi produzido neste host Linux.
 
 ## Revisão e ferramentas
@@ -29,7 +29,7 @@
 | Auditorias de APIs/headers Apple, interfaces, composição, capacidade/JIT/SHM, Fix 06 e estabilização | `PASS` | Auditorias estáticas, sem SDK Apple. |
 | Auditoria de configuração de entitlements | `PASS` | 7 regras estáticas; nenhum certificado/perfil/entitlement foi concedido ou testado. |
 | Sintaxe do workflow e relatórios dinâmicos | `PASS` | Parse YAML, `bash -n`, compilação dos blocos Python e teste de atualização em cópias temporárias; não é execução do workflow. |
-| Build `iphoneos` ARM64 / `.app` / IPA | `PASS` | Run `38516877338`; build e IPA unsigned validados no runner macOS. Ver histórico em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |
+| Build `iphoneos` ARM64 / `.app` / IPA | `PASS` | Run `38517367865`; build e IPA unsigned validados no runner macOS. Ver histórico em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |
 | Assinatura | `UNSIGNED` validado | O PR não forneceu secrets de assinatura; o validador confirmou ausência de assinatura e perfil. Nenhuma assinatura de distribuição foi testada. |
 | Instalação/execução no iPhone 13 | `NOT_TESTED` | Nenhum dispositivo conectado a esta sessão. |
 
@@ -37,7 +37,7 @@ O relatório de teste host está preservado em `ios/Documentation/evidence/host_
 
 ## Workflow GitHub Actions
 
-Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch` e automático em PRs para `main` que alterem o próprio workflow ou arquivos de código/configuração em `ios/**`; `ios/Documentation/**` e relatórios não disparam build. Os runs `38505249187`/`38505466371` falharam devido ao header iOS-incompatível `<mach/mach_vm.h>`/`mach_vm_region`; a chamada foi substituída por `vm_region_64`. Os runs `38506076451`/`38506481869` compilaram e empacotaram, mas falharam na validação do IPA. Após corrigir a ordem de `lipo`, o run [38516877338](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38516877338) passou nos jobs Linux e macOS e publicou o IPA unsigned validado. O validador passou os checks de integridade ZIP, `Payload`/bundle, plataforma `iphoneos`, arquitetura arm64 (`lipo -verify_arch` e `-archs`), assinatura unsigned e dependências (`otool -L`). O artifact é [Winlator-iOS-Release-38516877338](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip), contém `Winlator-iOS-unsigned.ipa`; SHA-256 `66c0b3bcf686fa374bd247eaac94af4063618e2bf25ad14eb5dfecf4e94482cd`. PRs ignoram secrets de assinatura; apenas o disparo manual pode usar secrets completos para assinatura development/ad-hoc.
+Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch` e automático em PRs para `main` que alterem o próprio workflow ou arquivos de código/configuração em `ios/**`; `ios/Documentation/**` e relatórios não disparam build. Os runs `38505249187`/`38505466371` falharam devido ao header iOS-incompatível `<mach/mach_vm.h>`/`mach_vm_region`; a chamada foi substituída por `vm_region_64`. Os runs `38506076451`/`38506481869` compilaram e empacotaram, mas falharam na validação do IPA. Após corrigir a ordem de `lipo`, o run `38516877338` passou; a repetição [38517367865](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38517367865), no commit `1305c69`, também passou nos jobs Linux e macOS e é o resultado mais recente. O validador passou os checks de integridade ZIP, `Payload`/bundle, plataforma `iphoneos`, arquitetura arm64 (`lipo -verify_arch` e `-archs`), assinatura unsigned e dependências (`otool -L`). O artifact mais recente é [Winlator-iOS-Release-38517367865](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip), contém `Winlator-iOS-unsigned.ipa`; SHA-256 `6e067b4394d4eb6a2be27771e9f2162e4cf000b7d7f10dec5b41600f2d26b248`. PRs ignoram secrets de assinatura; apenas o disparo manual pode usar secrets completos para assinatura development/ad-hoc.
 
 ### Histórico do workflow da fonte importada (não é build deste checkout)
 
@@ -50,10 +50,10 @@ A execução mais recente consultada no repositório de origem, commit `a3754626
 | Xcode / SDK | `NOT_TESTED` — indisponíveis localmente |
 | Arquitetura do host | `x86_64 Linux` |
 | Arquitetura `iphoneos` | `PASS` — ARM64 confirmado no IPA com `xcrun lipo <executável> -verify_arch arm64` e listado com `xcrun lipo -archs <executável>`. |
-| Compilação iOS / criação do IPA | `PASS` — run `38516877338`, IPA unsigned publicado após validação completa. |
+| Compilação iOS / criação do IPA | `PASS` — run `38517367865`, IPA unsigned publicado após validação completa. |
 | Dependências runtime incorporadas | Nenhum Wine/Box64/runtime Windows integrado; o `.app` transitório é somente a PoC diagnóstica. |
 | Assinatura / entitlements incorporados | `UNSIGNED` — PR sem secrets; validação confirmou ausência de assinatura e perfil de provisionamento. Não é instalável sem re-assinatura legítima. |
-| SHA-256 do IPA | `66c0b3bcf686fa374bd247eaac94af4063618e2bf25ad14eb5dfecf4e94482cd` — IPA unsigned do run `38516877338`. |
-| Artifact/link de IPA desta revisão | [Winlator-iOS-Release-38516877338](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip) — contém `Winlator-iOS-unsigned.ipa` e relatórios. |
+| SHA-256 do IPA | `6e067b4394d4eb6a2be27771e9f2162e4cf000b7d7f10dec5b41600f2d26b248` — IPA unsigned do run `38517367865`. |
+| Artifact/link de IPA desta revisão | [Winlator-iOS-Release-38517367865](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip) — contém `Winlator-iOS-unsigned.ipa` e relatórios. |
 
-**Resultado atual do pipeline Apple:** o run `38516877338` concluiu com sucesso e o artefato unsigned passou pelas validações listadas. Isso comprova apenas build/empacotamento estrutural do app iOS; não comprova instalação, execução em iPhone físico ou compatibilidade Windows. O produto continua `RUNTIME_INCOMPLETE` até um runtime Windows real ser implementado e validado.
+**Resultado atual do pipeline Apple:** o run `38517367865` concluiu com sucesso e o artefato unsigned passou pelas validações listadas. Isso comprova apenas build/empacotamento estrutural do app iOS; não comprova instalação, execução em iPhone físico ou compatibilidade Windows. O produto continua `RUNTIME_INCOMPLETE` até um runtime Windows real ser implementado e validado.

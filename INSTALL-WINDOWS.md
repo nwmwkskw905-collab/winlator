@@ -1,10 +1,10 @@
 # Instalação pelo Windows (Sideloadly)
 
-> **Aviso obrigatório:** um artifact IPA deste repositório é atualmente uma PoC diagnóstica (`Winlator iOS Probe`), não um Winlator funcional. Ela **não executa `.exe` Windows**. Instalar o app, caso um artifact exista, não valida Wine, Box64, JIT ou compatibilidade de jogos.
+> **Aviso obrigatório:** um artifact IPA deste repositório é atualmente uma PoC diagnóstica (`Winlator iOS Probe`), não um Winlator funcional. Ela **não executa `.exe` Windows**. Instalar o IPA publicado não valida Wine, Box64, JIT ou compatibilidade de jogos.
 
 ## Baixar o artifact
 
-1. O artifact unsigned atualmente validado está na [execução 38516877338](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38516877338), como [Winlator-iOS-Release-38516877338 (ZIP)](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11871794795/zip). Para execuções futuras, abra o workflow [`Winlator iOS Build`](https://github.com/nwmwkskw905-collab/winlator/actions/workflows/winlator-ios-release.yml).
+1. O artifact unsigned atualmente validado está na [execução 38517367865](https://github.com/nwmwkskw905-collab/winlator/actions/runs/38517367865), como [Winlator-iOS-Release-38517367865 (ZIP)](https://api.github.com/repos/nwmwkskw905-collab/winlator/actions/artifacts/11872615647/zip). Para execuções futuras, abra o workflow [`Winlator iOS Build`](https://github.com/nwmwkskw905-collab/winlator/actions/workflows/winlator-ios-release.yml).
 2. Confirme que a execução terminou com `success` e que o pacote inclui `Winlator-iOS-unsigned.ipa` ou `Winlator-iOS-signed.ipa`.
 3. Baixe o artifact `Winlator-iOS-Release-…` da página da execução. O download do artifact é um ZIP do GitHub Actions; extraia esse ZIP no Windows para obter o `.ipa` e os relatórios.
 4. Leia `BUILD-REPORT.md` e `SHA256SUMS.txt` dentro do artifact. Não instale um pacote cujo hash não corresponda ao relatório.
