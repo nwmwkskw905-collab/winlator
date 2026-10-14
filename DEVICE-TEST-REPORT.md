@@ -8,7 +8,7 @@
 
 - `PASS` — CMake/harness, CTest e 298 checks em host Linux x86_64.
 - `PASS` — 62 verificações estáticas da estrutura Xcode.
-- `NOT_TESTED` — compilação com SDK `iphoneos` nesta execução local (não há Xcode no host).
+- `BUILD_FAILED` — os runs GitHub Actions `38505249187` e `38505466371` falharam no compile `iphoneos` (`xcodebuild` exit 65); nenhum IPA foi produzido. Ver `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`.
 - `NOT_TESTED` — instalação ou execução em simulador.
 - `NOT_TESTED` — instalação ou execução em iPhone físico nesta execução.
 - `NOT_TESTED` — importar/inspecionar um `.exe`, executar PE x64, mostrar uma janela Windows, aceitar entrada ou produzir áudio Windows.
@@ -34,7 +34,7 @@ Também foi consultado o GitHub Actions do port original. No commit `a37546267e3
 | I — áudio de programa Windows | `NOT_TESTED` | Nenhuma bridge de áudio Wine. |
 | J — encerrar/reabrir sessão Windows | `NOT_TESTED` | Não há sessão Windows para abrir. |
 | K — memória/estabilidade no iPhone | `NOT_TESTED` | Somente checks POSIX executados em Linux x86_64. |
-| L — IPA arm64 `iphoneos` | `NOT_TESTED` nesta sessão local | O workflow pode produzir o artifact; valide sua execução e conteúdo separadamente. |
+| L — IPA arm64 `iphoneos` | `BUILD_FAILED` | Dois runs macOS falharam em `xcodebuild` antes do IPA; a correção está pendente de nova execução. |
 | M — instalação e uso em iPhone 13 | `NOT_TESTED` | Não existe dispositivo físico ligado ao agente. |
 
 **Status final de runtime:** `RUNTIME_INCOMPLETE`.

@@ -17,8 +17,7 @@
 #include <inttypes.h>          /* parsing /proc/self/maps */
 #endif
 #if defined(__APPLE__)
-#include <mach/mach.h>         /* mach_vm_region: the SDK's public way to ask about a range */
-#include <mach/mach_vm.h>
+#include <mach/mach.h>         /* public task and vm_region_64 interfaces; works with iphoneos */
 #endif
 
 /* ------------------------------------------------------------------ names */
@@ -383,14 +382,13 @@ static int linux_observed_bits(const void *addr, size_t len, unsigned *bits_out,
 #endif /* __linux__ */
 
 #if defined(__APPLE__)
-/* Apple: mach_vm_region is the public, documented way for a process to ask the kernel about
- * a range of its own address space (no entitlement, no private API). If the call fails for
- * any reason the answer is ENOTSUP: "not observable" is a legitimate result and must never
- * be replaced by an assumption. */
+/* `mach/mach_vm.h` is deliberately unsupported by the iPhoneOS SDK. Use the public
+ * 64-bit vm_region interface declared by mach/mach.h to inspect only this process's map.
+ * If the query fails, ENOTSUP means "not observable"; never replace it with a guess. */
 static int apple_observed_bits(const void *addr, size_t len, unsigned *bits_out, int *err_out)
 {
-    mach_vm_address_t address = (mach_vm_address_t)(uintptr_t)addr;
-    mach_vm_size_t size = 0u;
+    vm_address_t address = (vm_address_t)(uintptr_t)addr;
+    vm_size_t size = 0u;
     vm_region_basic_info_data_64_t info;
     mach_port_t object_name = MACH_PORT_NULL;
     mach_msg_type_number_t count = VM_REGION_BASIC_INFO_COUNT_64;
@@ -398,8 +396,8 @@ static int apple_observed_bits(const void *addr, size_t len, unsigned *bits_out,
 
     (void)len; /* the query answers for the containing region, which is what a caller needs */
     memset(&info, 0, sizeof(info));
-    kr = mach_vm_region(mach_task_self(), &address, &size, VM_REGION_BASIC_INFO_64,
-                        (vm_region_info_t)&info, &count, &object_name);
+    kr = vm_region_64(mach_task_self(), &address, &size, VM_REGION_BASIC_INFO_64,
+                      (vm_region_info_t)&info, &count, &object_name);
     if (object_name != MACH_PORT_NULL) {
         (void)mach_port_deallocate(mach_task_self(), object_name);
     }

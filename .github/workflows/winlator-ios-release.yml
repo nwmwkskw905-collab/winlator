@@ -32,7 +32,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout source and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -73,7 +73,7 @@ jobs:
           grep -q '^# records=.* fail=0 ' artifacts/host/host-report.txt
 
       - name: Upload Linux host evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Winlator-iOS-host-tests-${{ github.run_id }}
           path: artifacts/host/
@@ -92,7 +92,7 @@ jobs:
       EVIDENCE_DIR: ${{ github.workspace }}/ios/Documentation/evidence
     steps:
       - name: Checkout source and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -457,9 +457,9 @@ jobs:
           run_url = f"https://github.com/{repository}/actions/runs/{run_id}"
           device = Path(device_path)
           text = device.read_text()
-          old_bullet = "- `NOT_TESTED` — compilação com SDK `iphoneos` nesta execução local (não há Xcode no host)."
+          old_bullet = "- `BUILD_FAILED` — os runs GitHub Actions `38505249187` e `38505466371` falharam no compile `iphoneos` (`xcodebuild` exit 65); nenhum IPA foi produzido. Ver `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`."
           new_bullet = "- `PASS` — build/export IPA `iphoneos` arm64 e validações de pacote concluídos pelo runner macOS deste run."
-          old_row = "| L — IPA arm64 `iphoneos` | `NOT_TESTED` nesta sessão local | O workflow pode produzir o artifact; valide sua execução e conteúdo separadamente. |"
+          old_row = "| L — IPA arm64 `iphoneos` | `BUILD_FAILED` | Dois runs macOS falharam em `xcodebuild` antes do IPA; a correção está pendente de nova execução. |"
           new_row = "| L — IPA arm64 `iphoneos` | `PASS` no runner macOS | IPA, arquitetura, plataforma iPhoneOS e payload validados neste run; isso não é teste em dispositivo. |"
           if old_bullet not in text or old_row not in text:
               raise SystemExit("DEVICE-TEST-REPORT source text changed; refusing a partial report update")
@@ -472,9 +472,9 @@ jobs:
 
           matrix = Path(matrix_path)
           text = matrix.read_text()
-          old_build = "| Build iOS para `iphoneos` ARM64 | `NOT_TESTED` nesta sessão | Requer GitHub Actions/macOS/Xcode. |"
+          old_build = "| Build iOS para `iphoneos` ARM64 | `BUILD_FAILED` | Runs `38505249187` e `38505466371` falharam no compile; detalhes em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |"
           new_build = f"| Build iOS para `iphoneos` ARM64 | `PASS` neste run | Runner macOS; consulte {run_url} e o BUILD-REPORT. |"
-          old_ipa = "| IPA validado | `NOT_TESTED` nesta sessão | Nenhum IPA local gerado. |"
+          old_ipa = "| IPA validado | `BUILD_FAILED` / `NOT_CREATED` | Os dois builds de dispositivo falharam antes de empacotar um IPA. |"
           new_ipa = f"| IPA validado | `PASS` neste run | `{ipa_name}`; SHA-256 `{digest}`; payload `iphoneos` ARM64 verificado. |"
           if old_build not in text or old_ipa not in text:
               raise SystemExit("COMPATIBILITY-MATRIX source text changed; refusing a partial report update")
@@ -522,7 +522,7 @@ jobs:
           echo "IPA_SHA256=$HASH" >> "$GITHUB_OUTPUT"
 
       - name: Upload IPA, reports and build evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Winlator-iOS-Release-${{ github.run_id }}
           path: |
@@ -574,7 +574,7 @@ jobs:
 
       - name: Upload diagnostic logs if a prior build step failed
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Winlator-iOS-build-failure-evidence-${{ github.run_id }}
           path: ios/Documentation/evidence/ci_ios_*

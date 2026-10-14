@@ -3,6 +3,7 @@
 **Data da execução local:** 2026-10-14 UTC
 **Status do runtime:** `RUNTIME_INCOMPLETE`
 **Validação física:** `DEVICE_VALIDATION_PENDING` — nenhum iPhone foi conectado/testado nesta sessão.
+**Build/IPA CI atual:** `BUILD_FAILED` — duas tentativas macOS falharam na compilação; nenhum IPA foi produzido.
 **IPA nesta execução local:** `NOT_TESTED` — nenhum IPA foi produzido neste host Linux.
 
 ## Revisão e ferramentas
@@ -28,7 +29,7 @@
 | Auditorias de APIs/headers Apple, interfaces, composição, capacidade/JIT/SHM, Fix 06 e estabilização | `PASS` | Auditorias estáticas, sem SDK Apple. |
 | Auditoria de configuração de entitlements | `PASS` | 7 regras estáticas; nenhum certificado/perfil/entitlement foi concedido ou testado. |
 | Sintaxe do workflow e relatórios dinâmicos | `PASS` | Parse YAML, `bash -n`, compilação dos blocos Python e teste de atualização em cópias temporárias; não é execução do workflow. |
-| Build `iphoneos` ARM64 / `.app` / IPA | `NOT_TESTED` | Sem Xcode local; o workflow recém-adicionado ainda precisa de execução. |
+| Build `iphoneos` ARM64 / `.app` / IPA | `BUILD_FAILED` | Runs GitHub Actions `38505249187` e `38505466371` falharam no `xcodebuild` (exit 65); causa e correção proposta em `ios/Documentation/evidence/ci_ios_build_attempts_2026-10-14.txt`. |
 | Assinatura | `NOT_TESTED` | Nenhum certificado/perfil foi fornecido nesta execução. |
 | Instalação/execução no iPhone 13 | `NOT_TESTED` | Nenhum dispositivo conectado a esta sessão. |
 
@@ -36,7 +37,7 @@ O relatório de teste host está preservado em `ios/Documentation/evidence/host_
 
 ## Workflow GitHub Actions
 
-Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch` e automático em PRs para `main` que alterem a árvore iOS/relatórios. O job Linux compila e testa o harness; o job `macos-26` tenta construir/validar um IPA `iphoneos` arm64. Pull requests sempre ignoram secrets de assinatura; apenas o disparo manual pode usar o conjunto completo de secrets para assinatura development/ad-hoc. Sem secrets no disparo manual, a rota gera um IPA rotulado explicitamente como unsigned. A execução deste workflow, o nome/estado do artifact e o SHA-256 **ainda não estão comprovados** por este relatório.
+Foi criado `.github/workflows/winlator-ios-release.yml`, manual via `workflow_dispatch` e automático em PRs para `main` que alterem a árvore iOS/relatórios. O job Linux passou; os dois runs macOS observados falharam na compilação C de `runtime_memory.c`, antes de produzir o `.app`/IPA. O motivo, visível nas anotações do check, foi o include iOS-incompatível `<mach/mach_vm.h>` e a chamada `mach_vm_region`; a árvore agora usa `vm_region_64`, mas essa correção ainda precisa ser compilada por um novo run. Pull requests ignoram secrets de assinatura; apenas o disparo manual pode usar o conjunto completo de secrets para assinatura development/ad-hoc. Nenhum IPA ou SHA-256 foi produzido nestes runs.
 
 ### Histórico do workflow da fonte importada (não é build deste checkout)
 
@@ -44,15 +45,15 @@ A execução mais recente consultada no repositório de origem, commit `a3754626
 
 ## Campos de release
 
-| Campo | Valor comprovado nesta execução local |
+| Campo | Valor comprovado neste checkout (host Linux e runs GitHub Actions citados) |
 |---|---|
 | Xcode / SDK | `NOT_TESTED` — indisponíveis localmente |
 | Arquitetura do host | `x86_64 Linux` |
 | Arquitetura `iphoneos` | `NOT_TESTED` |
-| Compilação iOS / criação do IPA | `NOT_TESTED` |
-| Dependências runtime incorporadas | Nenhum Wine/Box64/runtime Windows integrado; o target iOS não foi compilado aqui. |
+| Compilação iOS / criação do IPA | `BUILD_FAILED` nos dois runs macOS observados |
+| Dependências runtime incorporadas | Nenhum Wine/Box64/runtime Windows integrado; o build do target iOS falhou antes de gerar o `.app`. |
 | Assinatura / entitlements incorporados | `NOT_TESTED` |
-| SHA-256 do IPA | `NOT_TESTED` — não há IPA local. |
-| Artifact/link de IPA desta revisão | `NOT_TESTED` — execute o workflow manual para produzir/validar o artifact. |
+| SHA-256 do IPA | `NOT_GENERATED` — os builds CI falharam antes do packaging. |
+| Artifact/link de IPA desta revisão | `NOT_CREATED` — não houve IPA para upload; somente evidência de falha. |
 
-**`BUILD_FAILED` não foi observado localmente; build Apple/IPA permanece `NOT_TESTED`.** Mesmo que o workflow gere um IPA, o produto continua `RUNTIME_INCOMPLETE` até existir e ser testado um runtime Windows real.
+**`BUILD_FAILED` foi observado nos dois runs macOS listados acima; nenhum IPA/SHA-256 foi produzido.** A correção de header/API está pendente de novo build; mesmo que o workflow gere um IPA, o produto continua `RUNTIME_INCOMPLETE` até existir e ser testado um runtime Windows real.

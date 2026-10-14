@@ -42,6 +42,7 @@ ABSENT_ON_APPLE = {
     "sys/auxv.h": "Linux/glibc (getauxval)",
     "sys/prctl.h": "Linux only",
     "sys/sendfile.h": "Linux only",
+    "mach/mach_vm.h": "explicitly unsupported by the iPhoneOS SDK (observed in Xcode 26.5)",
     "asm/hwcap.h": "Linux/AArch64 only",
     "elf.h": "Linux only",
     "linux/": "Linux only (whole subtree)",
@@ -106,10 +107,10 @@ def main() -> int:
             problems += 1
             print(f"{source.relative_to(ROOT)!s:<44} {number:<6} {header}  <- {reason}")
     if problems == 0:
-        print("UNGUARDED_LINUX_INCLUDES=0 (no Linux-only header reaches the Apple build)")
+        print("UNGUARDED_APPLE_SDK_HEADERS=0 (no known-absent header reaches the Apple build)")
         print("note: this is a static pre-check; the compiler remains the authority.")
     else:
-        print(f"UGUARDED_LINUX_INCLUDES={problems}")
+        print(f"UNGUARDED_APPLE_SDK_HEADERS={problems}")
     return 1 if problems else 0
 
 

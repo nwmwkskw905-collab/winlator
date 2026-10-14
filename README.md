@@ -17,6 +17,8 @@ Por isso, não importe executáveis esperando executá-los. Um eventual IPA dest
 
 ## Construção e evidências
 
+As duas primeiras tentativas Apple (`38505249187` e `38505466371`) terminaram `BUILD_FAILED` antes de gerar IPA; a causa (uso do header iOS-incompatível `mach/mach_vm.h`) foi corrigida para `vm_region_64` e aguarda novo CI. Não há IPA ou SHA-256 dessas tentativas.
+
 - [BUILD-REPORT.md](BUILD-REPORT.md) — testes executados aqui e estado de compilação Apple.
 - [RUNTIME-REPORT.md](RUNTIME-REPORT.md) — componentes presentes/ausentes.
 - [DEVICE-TEST-REPORT.md](DEVICE-TEST-REPORT.md) — separação entre host, runner Apple e iPhone físico.

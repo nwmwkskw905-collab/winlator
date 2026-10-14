@@ -1,5 +1,11 @@
+[  3%] Building C object CMakeFiles/phase02_runtime_core.dir/RuntimeCore/src/runtime_memory.c.o
+[  7%] Linking C static library libphase02_runtime_core.a
 [ 70%] Built target phase02_runtime_core
-[ 77%] Built target phase02_unit_tests
-[ 85%] Built target phase02_poc
+[ 74%] Linking C executable phase02_poc
+[ 77%] Linking C executable phase02_unit_tests
+[ 81%] Built target phase02_poc
+[ 85%] Linking C executable phase02_run_selected_tests
+[ 88%] Built target phase02_unit_tests
 [ 92%] Built target phase02_run_selected_tests
+[ 96%] Linking C executable phase02_exec_memory_tests
 [100%] Built target phase02_exec_memory_tests

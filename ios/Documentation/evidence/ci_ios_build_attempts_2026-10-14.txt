@@ -1,0 +1,36 @@
+GitHub Actions iPhoneOS build attempts — 2026-10-14 UTC
+
+Scope: this file records two failed CI attempts for this branch. Neither produced an IPA.
+
+RUN 38505249187
+  commit: eed63e5098edc4ff478c237c7b145865270656f5
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38505249187
+  Linux host job: PASS
+  macOS/iPhoneOS job: FAIL at “Build unsigned iPhoneOS app” (xcodebuild exit 65)
+  Prior toolchain, project parser, and static audit steps passed.
+  Raw step logs and failure-artifact download were unavailable to this sandbox (GitHub log/artifact
+  storage returned EOF); no error detail is inferred from this run alone.
+
+RUN 38505466371
+  commit: a9210b0814b20696e9a67664840a94a67e03d295
+  URL: https://github.com/nwmwkskw905-collab/winlator/actions/runs/38505466371
+  Linux host job: PASS
+  macOS/iPhoneOS job: FAIL at “Build unsigned iPhoneOS app” (xcodebuild exit 65)
+  The GitHub check-run annotations exposed these compiler diagnostics:
+    ios/RuntimeCore/src/runtime_memory.c:401:10: error: call to undeclared function 'mach_vm_region';
+      ISO C99 and later do not support implicit function declarations
+    iPhoneOS26.5.sdk/usr/include/mach/mach_vm.h:1:2: error: mach_vm.h unsupported.
+    1 | #error mach_vm.h unsupported.
+  The compiler path identifies Xcode 26.6 / iPhoneOS SDK 26.5. The public
+  `<mach/mach_vm.h>` header was therefore not valid for the iPhoneOS target, despite being
+  guarded by `__APPLE__`; the static include audit had not previously known this limitation.
+
+CORRECTION APPLIED AFTER THESE RUNS
+  The Apple memory-observation implementation now uses `vm_region_64` and types declared by
+  `<mach/mach.h>`, and the Apple-header audit now rejects `<mach/mach_vm.h>` on iPhoneOS. These
+  changes are not validated by an Apple compiler yet; the next CI run is required.
+
+RESULT AT TIME OF WRITING
+  BUILD_FAILED for both attempts; no `.app`, IPA, signature, SHA-256, or downloadable release
+  artifact was produced. No physical iPhone test occurred; DEVICE_VALIDATION_PENDING. The
+  Windows runtime remains RUNTIME_INCOMPLETE.

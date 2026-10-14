@@ -192,7 +192,7 @@ def rules(root: pathlib.Path):
         "app-container-file-backed-MAP_SHARED":
             ("RuntimeCore/src/runtime_dual_mapping.c",
              r"rt_dual_map_create_file_backed(_readonly_view)?\b"),
-        "mach-VM": ("RuntimeCore/src/runtime_memory.c", r"\bmach_vm_region\b|\bvm_remap\b"),
+        "mach-VM": ("RuntimeCore/src/runtime_memory.c", r"\bmach_vm_region\b|\bvm_region_64\b|\bvm_remap\b"),
     }
     for name, (relative, pattern) in checks.items():
         path = root / relative
